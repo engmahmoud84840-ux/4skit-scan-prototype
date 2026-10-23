@@ -34,7 +34,7 @@ const MB={pdf:{hi:1.6,std:.6,lo:.25},img:{hi:1.8,std:.7,lo:.3}};
 const BAD=/[\/\\:*?"<>|]/g;
 let P={sid:0},snT=null,snK=null,errT=null;
 // الصيغة والجودة والاسم المعدَّل تبقى حتى إنهاء الجلسة، والاسم التلقائي يتجدّد بوقت كل فتح (D-428)
-function onShow(a){if(P.sid!=APP.sid)P={sid:APP.sid,fmt:'pdf',q:'std',name:null,loc:0};autoName=mkName();clearTimeout(P.tm);clearInterval(P.iv);
+function onShow(a){lastH=innerHeight;if(P.sid!=APP.sid)P={sid:APP.sid,fmt:'pdf',q:'std',name:null,loc:0};autoName=mkName();clearTimeout(P.tm);clearInterval(P.iv);
 Object.assign(P,{from:a.from||'pages',err:null,exp:null,block:false,snack:null,over:null});draw();}
 function onBack(){if(P.over=='share')return toSucc();if(P.exp)return cancelExp();if(P.block)return;xTap();}
 function xTap(){go(P.from=='quick'?'camera':'pages');}
@@ -51,6 +51,8 @@ function showErr(e){P.err=e;clearTimeout(errT);if(e=='bad')errT=setTimeout(()=>{
 function onBefore(ev){if(ev.data&&BAD.test(ev.data)){BAD.lastIndex=0;ev.preventDefault();const r=ev.data.replace(BAD,'');if(r){const el=ev.target;el.setRangeText(r,el.selectionStart,el.selectionEnd,'end');P.name=el.value;}showErr('bad');}BAD.lastIndex=0;}
 // أثناء الكتابة: سطر الاختيار وشريط الصفحات يختفيان مؤقتًا، والخانة تتحرك فوق الكيبورد (مساحة المتصفح أصغر من التطبيق)
 function nmFocus(el,col){document.getElementById('fb').style.outline='1px solid '+col;const h=document.getElementById('hd');if(h)h.style.display='none';const k=()=>el.scrollIntoView({block:'center'});setTimeout(k,150);setTimeout(k,450);}
+// قفل الكيبورد بزر الرجوع: الشاشة ترجع لطولها، فالمستخدم يخرج من الخانة (D-794)
+let lastH=innerHeight;addEventListener('resize',()=>{const a=document.activeElement;if(a&&a.id=='nm'&&innerHeight>lastH+100)a.blur();lastH=innerHeight;});
 function nmBlur(){const b=document.getElementById('fb');if(b)b.style.outline='';const h=document.getElementById('hd');if(h)h.style.display='';}
 // علامة X تمسح الاسم كله والخانة تبقى فاضية (D-791)؛ الاسم الرمادي يظهر بعد الخروج من الخانة فقط (D-792)
 function nmClear(){const el=document.getElementById('nm');el.value='';P.name='';const x=document.getElementById('nx');if(x)x.style.display='none';el.focus();}

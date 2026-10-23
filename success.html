@@ -14,7 +14,7 @@ const T={ar:{open:'فتح الملف',openImg:'فتح الصور',share:'مشا�
 en:{open:'Open file',openImg:'Open images',share:'Share',newDoc:'New document',back:'Back to pages',viewer:'File viewer app (system)',shareSheet:'Android share sheet (system)',backSys:'Back'}};
 let P={over:null},busy=false;
 function onShow(){P.over=null;busy=false;draw();}
-function onBack(){if(P.over){P.over=null;return draw();}act('back');}
+function onBack(){if(P.over){P.over=null;return draw();}if(busy)return;busy=true;go('camera');}
 function act(k){if(busy)return;if(k=='open')P.over='viewer';else if(k=='share')P.over='share';
 else if(k=='new'){busy=true;APP.newDoc();return go('camera',{snack:'dm'});}
 else if(k=='back'){busy=true;return go('pages');}draw();}

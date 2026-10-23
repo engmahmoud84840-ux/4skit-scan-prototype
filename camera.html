@@ -43,7 +43,12 @@ function setFlash(m){APP.flash=m;P.bar=false;torch();draw();}
 function snack(k,arg){P.snack={k,arg};clearTimeout(snT);snT=setTimeout(()=>{P.snack=null;draw();},(k=='um'||k=='dm')?10000:4000);draw();}
 function snackAct(){const k=P.snack&&P.snack.k;P.snack=null;clearTimeout(snT);if(k=='um')go('processing',{mode:'resume'});else if(k=='dm')APP.undoNewDoc();else if(k=='lm')go('pages');else draw();}
 const full=()=>P.mode=='main'&&APP.pages.length>=APP.MAX;
-function click(){if(!APP.sound)return;try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createBufferSource(),b=a.createBuffer(1,a.sampleRate*.06,a.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);o.buffer=b;o.connect(a.destination);o.start();}catch(e){}}
+// صوت الالتقاط: نقرتين قصيرتين ناعمتين، تقريب لصوت كاميرا أندرويد
+let AC=null;
+function click(){if(!APP.sound)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const t0=AC.currentTime+.01;
+[[0,2600,.5],[.075,1700,.35]].forEach(([dt,f,v])=>{const n=Math.round(AC.sampleRate*.03),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+const s=AC.createBufferSource(),bp=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;bp.type='bandpass';bp.frequency.value=f;bp.Q.value=1.2;
+g.gain.setValueAtTime(v,t0+dt);g.gain.exponentialRampToValueAtTime(.001,t0+dt+.03);s.connect(bp).connect(g).connect(AC.destination);s.start(t0+dt);});}catch(e){}}
 function shoot(){if(P.busy)return;if(full())return snack('lm');if(P.st=='perm'||P.st=='denied')return startCam(true);if(P.st!='normal')return;
 const vw=v.videoWidth,vh=v.videoHeight;if(!vw)return snack('cf');P.busy=true;P.bar=false;
 const box=document.getElementById('pv').getBoundingClientRect(),k=Math.max(box.width/vw,box.height/vh),cw=box.width/k,ch=box.height/k,sx=(vw-cw)/2,sy=(vh-ch)/2,m=Math.min(1,1600/Math.max(cw,ch));

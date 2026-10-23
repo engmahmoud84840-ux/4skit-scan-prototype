@@ -20,11 +20,13 @@ en:{page:'Page',exp:'Export',crop:'Crop',rot:'Rotate',br:'Brightness',ra:'Reset 
 ra2:'Reset to auto',undo:'Undo',lm:'This is the last page in this session (limit: 100 pages).',aX:'Cancel'}};
 let P={},snT=null,snK=null,busy=false;
 const cp=a=>a.map(p=>p.slice());
+// القص يبدأ على الصورة كلها (D-789)
+const FIX=[[0,0],[1,0],[1,1],[0,1]];
 // mode: new (بعد الالتقاط أو صورة من الهاتف) / edit (وضع التعديل)
 function onShow(a){busy=false;if(a.mode=='resume'){P.bar=null;return draw();}snK=null;
-if(a.mode=='new'){P={mode:'new',ph:a.photo,f:'auto',rot:0,br:0,c:cp(APP.FIX),c0:APP.FIX,init:{f:'auto',br:0,rot:0,c:APP.FIX},bar:null,snack:null,N:APP.pages.length+1,lim:APP.pages.length+1>=APP.MAX};}
+if(a.mode=='new'){P={mode:'new',ph:a.photo,f:'auto',rot:0,br:0,c:cp(FIX),c0:FIX,init:{f:'auto',br:0,rot:0,c:FIX},bar:null,snack:null,N:APP.pages.length+1,lim:APP.pages.length+1>=APP.MAX};}
 else{const pg=APP.pages.find(p=>p.id==a.pageId),N=APP.pages.indexOf(pg)+1;
-if(a.mode=='retake')Object.assign(P,{mode:'edit',ph:a.photo,f:'auto',rot:0,br:0,c:cp(APP.FIX),c0:APP.FIX,init:{f:'auto',br:0,rot:0,c:APP.FIX},replaced:true,bar:null,snack:null,N,pageId:pg.id,saved:null});
+if(a.mode=='retake')Object.assign(P,{mode:'edit',ph:a.photo,f:'auto',rot:0,br:0,c:cp(FIX),c0:FIX,init:{f:'auto',br:0,rot:0,c:FIX},replaced:true,bar:null,snack:null,N,pageId:pg.id,saved:null});
 else P={mode:'edit',pageId:pg.id,ph:{src:pg.src,w:pg.w,h:pg.h},f:pg.f,rot:pg.rot,br:pg.br,c:cp(pg.c),c0:pg.init.c,init:pg.init,replaced:false,bar:null,snack:null,N,saved:{f:pg.f,rot:pg.rot,br:pg.br,c:pg.c.join()}};}
 P.img=null;render();draw();}
 function render(){const k=[P.ph.src.length,P.c.join(),P.rot].join('|');if(P.ik==k&&P.img)return;P.ik=k;

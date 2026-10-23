@@ -8,7 +8,8 @@ function C(){return S.mode=='dark'?{bar:'#1F2937',bg:'#111827',tx:'#F9FAFB',t2:'
 const arN=n=>n==1?'صفحة واحدة':n==2?'صفحتان':n<=10?`${n} صفحات`:`${n} صفحة`;
 const VW=()=>innerWidth,VH=()=>innerHeight;
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(window.draw&&APP.cur==SCREEN)draw();});
-addEventListener('resize',()=>{if(window.draw&&APP.cur==SCREEN)draw(true);});
+// الكيبورد يغيّر طول الشاشة: لا إعادة رسم أثناء الكتابة، وشاشة التصدير تتمدد وحدها
+addEventListener('resize',()=>{if(window.draw&&APP.cur==SCREEN&&SCREEN!='export'&&!(document.activeElement&&document.activeElement.tagName=='INPUT'))draw();});
 document.addEventListener('pointerdown',()=>APP.arm(),true);
 // أدوات أندرويد لاختيار صورة أو ملف PDF: نافذة اختيار المتصفح
 function pick(accept,cb){const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>{if(i.files[0])cb(i.files[0]);};i.click();}

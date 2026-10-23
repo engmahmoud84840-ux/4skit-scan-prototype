@@ -2,7 +2,7 @@
 <html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-html,body{margin:0;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent}
+html,body,#ph{margin:0;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent}
 .ib{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;flex:none}
 .pr{cursor:pointer;position:relative;user-select:none;-webkit-user-select:none}
 .pr:active:after{content:'';position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:.1}
@@ -14,7 +14,7 @@ input.nm{all:unset;flex:1;min-width:0;font:inherit;unicode-bidi:plaintext}
 input.nm::placeholder{color:var(--ph2);opacity:1}
 @keyframes sp{to{transform:rotate(360deg)}}
 </style></head><body><div id="ph"></div>
-<script src="icons.js"></script><script src="common.js"></script>
+<script src="icons.js?v=2"></script><script src="common.js?v=2"></script>
 <script>
 const SCREEN='export';
 const p2=x=>String(x).padStart(2,'0');
@@ -93,7 +93,7 @@ const prog=P.exp?`${scrim()}<div style="${box}"><div style="font-size:16px;line-
 const sn=P.snack?`<div style="position:absolute;bottom:12px;inset-inline:16px;z-index:6;background:${c.sb};border-radius:8px;min-height:48px;display:flex;align-items:center;padding-inline:16px"><span style="font-size:14px;line-height:20px;color:${c.st};padding:14px 0">${P.snack}</span></div>`:'';
 const over=P.over=='share'?`<div style="position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:12px;color:#fff;font-size:14px"><div style="background:${c.dlg};color:${c.tx};width:100%;border-radius:28px 28px 0 0;padding:32px 16px;text-align:center">${t.shareSheet}</div><div onclick="toSucc()" class="pr" style="position:absolute;top:16px;background:#fff;color:#111;border-radius:12px;padding:8px 16px;font-weight:500">${t.backShare}</div></div>`:'';
 const blk=P.block?`<div style="position:absolute;inset:0;z-index:19"></div>`:'';
-document.getElementById('ph').innerHTML=`<div dir="${ar?'rtl':'ltr'}" style="width:${W}px;height:${H}px;overflow:hidden;position:relative;font-family:${font},system-ui;background:${c.bg};display:flex;flex-direction:column">
+document.getElementById('ph').innerHTML=`<div dir="${ar?'rtl':'ltr'}" style="width:100%;height:100%;overflow:hidden;position:relative;font-family:${font},system-ui;background:${c.bg};display:flex;flex-direction:column">
 ${top}
 <div style="flex:none;background:${c.bg}">${selLine}${strip}</div>
 <div style="flex:1;position:relative;min-height:0;display:flex;flex-direction:column;border-top:1px solid ${c.bd}">${body}${sn}</div>

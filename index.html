@@ -26,7 +26,11 @@ APP.loadImg=src=>IMG[src]||(IMG[src]=new Promise((ok,no)=>{const i=new Image();i
 // القص: الأركان الأربعة تتفرد لمستطيل (شبكة مثلثات)، ثم التدوير والفلتر
 function warp(im,c,max){const W=im.naturalWidth,H=im.naturalHeight,q=c.map(p=>[p[0]*W,p[1]*H]),d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 let ow=(d(q[0],q[1])+d(q[3],q[2]))/2,oh=(d(q[0],q[3])+d(q[1],q[2]))/2;const k=Math.min(1,max/Math.max(ow,oh,1));ow=Math.max(1,Math.round(ow*k));oh=Math.max(1,Math.round(oh*k));
-const cv=document.createElement('canvas');cv.width=ow;cv.height=oh;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,ow,oh);
+const cv=document.createElement('canvas');cv.width=ow;cv.height=oh;const x=cv.getContext('2d');
+// طبقة أساس بمستطيل الأركان: تملأ أي فراغ بين المثلثات فلا تظهر خطوط، والمستطيل المستقيم لا يحتاج مثلثات
+const xs=q.map(p=>p[0]),ys=q.map(p=>p[1]),bx=Math.min(...xs),by=Math.min(...ys),bw=Math.max(1,Math.max(...xs)-bx),bh=Math.max(1,Math.max(...ys)-by);
+x.drawImage(im,bx,by,bw,bh,0,0,ow,oh);
+const rect=Math.abs(q[0][1]-q[1][1])<1&&Math.abs(q[3][1]-q[2][1])<1&&Math.abs(q[0][0]-q[3][0])<1&&Math.abs(q[1][0]-q[2][0])<1;if(rect)return cv;
 const S=(u,v)=>[(1-v)*((1-u)*q[0][0]+u*q[1][0])+v*((1-u)*q[3][0]+u*q[2][0]),(1-v)*((1-u)*q[0][1]+u*q[1][1])+v*((1-u)*q[3][1]+u*q[2][1])];
 const tri=(s,t)=>{const [x0,y0]=s[0],[x1,y1]=s[1],[x2,y2]=s[2],[u0,v0]=t[0],[u1,v1]=t[1],[u2,v2]=t[2],den=(x1-x0)*(y2-y0)-(x2-x0)*(y1-y0);if(!den)return;
 const a=((u1-u0)*(y2-y0)-(u2-u0)*(y1-y0))/den,b=((u2-u0)*(x1-x0)-(u1-u0)*(x2-x0))/den,cc=((v1-v0)*(y2-y0)-(v2-v0)*(y1-y0))/den,dd=((v2-v0)*(x1-x0)-(v1-v0)*(x2-x0))/den;

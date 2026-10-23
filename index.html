@@ -70,7 +70,8 @@ F[n].style.display='block';APP.cur=n;document.querySelector('meta[name=theme-col
 APP.setLang=l=>{APP.lang=l;document.documentElement.lang=l;NAMES.forEach(n=>{const w=F[n].contentWindow;if(n==APP.cur&&w.draw)w.draw();});};
 // زر الرجوع في أندرويد: كل شاشة تتعامل معه بـ onBack
 APP.armed=false;APP.arm=()=>{if(!APP.armed){history.pushState({p:1},'');APP.armed=true;}};
-addEventListener('popstate',()=>{APP.armed=false;const w=APP.cur&&F[APP.cur].contentWindow;if(w&&w.onBack)w.onBack();APP.arm();});
+// خانة السجل المضافة بلا لمسة يتخطّاها Chrome عند الرجوع، فاللمسة التالية تضيف خانة جديدة
+addEventListener('popstate',()=>{APP.armed=false;const w=APP.cur&&F[APP.cur].contentWindow;if(w&&w.onBack)w.onBack();history.pushState({p:1},'');});
 APP.exitApp=()=>{const d=dark(),e=document.getElementById('end'),ar=APP.lang=='ar';NAMES.forEach(n=>F[n].style.display='none');F.camera.contentWindow.onHide();APP.cur=null;
 e.style.cssText+=`;display:flex;background:${d?'#111827':'#FFFFFF'};color:${d?'#F9FAFB':'#171A1A'}`;e.dir=ar?'rtl':'ltr';
 e.innerHTML=`<div style="font-size:20px;line-height:28px;font-weight:600">${ar?'انتهت التجربة':'The test has ended'}</div><div onclick="location.reload()" style="cursor:pointer;min-height:48px;display:flex;align-items:center;padding:0 24px;border-radius:12px;background:#0F6B6D;color:#fff;font-size:14px;font-weight:500">${ar?'فتح التطبيق مرة أخرى':'Open the app again'}</div>`;};

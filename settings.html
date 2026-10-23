@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.ib{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;flex:none}
+.pr{cursor:pointer;position:relative}
+.pr:active:after{content:'';position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:.1}
+.sc{scrollbar-width:thin}
+svg.i{width:24px;height:24px;display:block;flex:none}
+</style></head><body><div id="ph"></div>
+<script src="icons.js"></script><script src="common.js"></script>
+<script>
+const SCREEN='settings';
+const T={ar:{title:'الإعدادات',backN:'العودة إلى الكاميرا',gen:'عام',priv:'الخصوصية',cam:'التصوير',about:'عن التطبيق',lang:'اللغة',del:'حذف الجلسة السابقة بعد',lock:'قفل التطبيق',sound:'صوت الالتقاط',policy:'سياسة الخصوصية',contact:'تواصل معنا',lic:'تراخيص البرامج مفتوحة المصدر',
+phone:'لغة الهاتف',langs:['العربية','English'],per:['يوم واحد','3 أيام','7 أيام','14 يومًا'],rule:p=>`تُحذف الجلسة تلقائيًا إذا لم تُفتح لمدة ${p}.`,lockS:'يُطلب قفل الهاتف (البصمة أو الوجه أو الرمز) لفتح التطبيق.',ver:'الإصدار 1.0.0',
+bio:'نافذة التحقق في أندرويد (من النظام)',ok:'نجح التحقق',fail:'إلغاء',browser:'المتصفح (من النظام)',mail:'تطبيق البريد (من النظام)',licP:'صفحة التراخيص (من مكتبة)',back2:'رجوع'},
+en:{title:'Settings',backN:'Back to camera',gen:'General',priv:'Privacy',cam:'Camera',about:'About',lang:'Language',del:'Delete previous session after',lock:'App lock',sound:'Shutter sound',policy:'Privacy policy',contact:'Contact us',lic:'Open-source licenses',
+phone:'Phone language',langs:['العربية','English'],per:['1 day','3 days','7 days','14 days'],rule:p=>`Your session is deleted automatically if not opened for ${p}.`,lockS:"Your phone's screen lock (fingerprint, face, or PIN) is required to open the app.",ver:'Version 1.0.0',
+bio:'Android verification prompt (system)',ok:'Verified',fail:'Cancel',browser:'Browser (system)',mail:'Email app (system)',licP:'Licenses page (from a library)',back2:'Back'}};
+let P={lng:0,per:3,lock:false,dlg:null,bio:null,over:null};
+function onShow(){P.dlg=null;P.bio=null;P.over=null;draw();}
+function onBack(){if(P.dlg||P.bio||P.over){P.dlg=null;P.bio=null;P.over=null;return draw();}go('camera');}
+const langName=i=>i==0?T[S.lang].phone:T[S.lang].langs[i-1];
+function pickLang(i){P.lng=i;P.dlg=null;APP.setLang(i==0?APP.phoneLang:i==1?'ar':'en');draw();}
+function pickPer(i){P.per=i;P.dlg=null;draw();}
+function tapLock(){P.bio={to:!P.lock};draw();}
+function bioEnd(ok){if(ok)P.lock=P.bio.to;P.bio=null;draw();}
+function tapSound(){APP.sound=!APP.sound;draw();}
+function draw(){const t=T[S.lang],W=VW(),H=VH(),ar=S.lang=='ar',c=C(),font=ar?"'IBM Plex Sans Arabic'":"Inter";
+const sc0=document.getElementById('sc'),keep=sc0?sc0.scrollTop:0;
+const top=`<div style="min-height:64px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 4px;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none"><div style="justify-self:start"><div onclick="go('camera')" class="ib pr" aria-label="${t.backN}" style="color:${c.tx}">${ic('ic_arrow_back',24,ar)}</div></div><div style="font-weight:600;font-size:20px;line-height:28px;white-space:nowrap;color:${c.tx}">${t.title}</div><div></div></div>`;
+const head=h=>`<div style="font-size:14px;line-height:20px;font-weight:600;color:${c.t2};margin:16px 16px 8px">${h}</div>`;
+const sw=on=>`<span style="flex:none;width:52px;height:32px;border-radius:16px;box-sizing:border-box;position:relative;${on?`background:${c.pri}`:`background:${c.tr};border:2px solid ${c.th}`}"><span style="position:absolute;top:50%;transform:translateY(-50%);${on?'inset-inline-end:4px;width:24px;height:24px;background:'+c.on:'inset-inline-start:6px;width:16px;height:16px;background:'+c.th};border-radius:50%"></span></span>`;
+const item=o=>`<div ${o.fn?`onclick="${o.fn}" class="pr"`:''} style="display:flex;align-items:center;gap:16px;min-height:${o.sub||o.val?72:56}px;padding:8px 24px 8px 16px;padding-inline:16px 24px;box-sizing:border-box;color:${c.tx}"><div style="flex:1;min-width:0"><div style="font-size:16px;line-height:24px">${o.name}</div>${o.val?`<div style="font-size:14px;line-height:20px;color:${c.pri}">${o.val}</div>`:''}${o.sub?`<div style="font-size:14px;line-height:20px;color:${c.t2}">${o.sub}</div>`:''}</div>${o.end||''}</div>`;
+const body=`<div id="sc" class="sc" style="flex:1;overflow-y:auto;min-height:0;padding-bottom:16px">
+${head(t.gen)}${item({name:t.lang,val:langName(P.lng),fn:"P.dlg='lang';draw()"})}
+${head(t.priv)}${item({name:t.lock,sub:t.lockS,fn:'tapLock()',end:sw(P.lock)})}
+${item({name:t.del,val:t.per[P.per],sub:t.rule(t.per[P.per]),fn:"P.dlg='per';draw()"})}
+${head(t.cam)}${item({name:t.sound,fn:'tapSound()',end:sw(APP.sound)})}
+${head(t.about)}${item({name:t.policy,fn:"P.over='policy';draw()",end:`<span style="color:${c.t2}">${ic('ic_open_in_new')}</span>`})}
+${item({name:t.ver})}
+${item({name:t.contact,fn:"P.over='contact';draw()",end:`<span style="color:${c.t2}">${ic('ic_open_in_new')}</span>`})}
+${item({name:t.lic,fn:"P.over='lic';draw()",end:`<span style="color:${c.t2}">${ic('ic_chevron_forward',24,ar)}</span>`})}</div>`;
+const scrim=x=>`<div style="position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:20;display:flex;align-items:center;justify-content:center;padding:24px" ${x||''}>`;
+const rad=on=>`<span style="flex:none;width:20px;height:20px;border-radius:50%;box-sizing:border-box;border:2px solid ${on?c.pri:c.t2};display:flex;align-items:center;justify-content:center">${on?`<span style="width:10px;height:10px;border-radius:50%;background:${c.pri}"></span>`:''}</span>`;
+let dlg='';if(P.dlg){const lang=P.dlg=='lang',opts=lang?[0,1,2].map(i=>[langName(i),i==0?`<div style="font-size:14px;line-height:20px;color:${c.t2}">${APP.phoneLang=='ar'?'العربية':'English'}</div>`:'']):t.per.map(p=>[p,'']),cur=lang?P.lng:P.per;
+dlg=`${scrim(`onclick="if(event.target===this){P.dlg=null;draw()}"`)}<div style="background:${c.dlg};border-radius:28px;padding:24px 0 16px;width:100%;max-width:312px;box-sizing:border-box;max-height:100%;overflow:auto"><div style="font-size:24px;line-height:32px;color:${c.tx};padding:0 24px 16px">${lang?t.lang:t.del}</div>${opts.map((o,i)=>`<div onclick="${lang?'pickLang':'pickPer'}(${i})" class="pr" style="display:flex;align-items:center;gap:16px;min-height:56px;padding:4px 24px;box-sizing:border-box;color:${c.tx}">${rad(i==cur)}<div><div style="font-size:16px;line-height:24px">${o[0]}</div>${o[1]}</div></div>`).join('')}</div></div>`;}
+const bio=P.bio?`<div style="position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end"><div style="background:${c.dlg};color:${c.tx};border-radius:28px 28px 0 0;padding:32px 16px;text-align:center;font-size:14px">${t.bio}<div style="display:flex;gap:12px;justify-content:center;margin-top:16px"><div onclick="bioEnd(0)" class="pr" style="padding:8px 16px;border-radius:12px;color:${c.pri};font-weight:500">${t.fail}</div><div onclick="bioEnd(1)" class="pr" style="padding:8px 16px;border-radius:12px;background:${c.pri};color:${c.on};font-weight:500">${t.ok}</div></div></div></div>`:'';
+const over=P.over?`<div style="position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;color:#fff;font-size:14px"><div>${{policy:t.browser,contact:t.mail,lic:t.licP}[P.over]}</div><div onclick="P.over=null;draw()" class="pr" style="background:#fff;color:#111;border-radius:12px;padding:8px 16px;font-weight:500">${t.back2}</div></div>`:'';
+document.getElementById('ph').innerHTML=`<div dir="${ar?'rtl':'ltr'}" style="width:${W}px;height:${H}px;overflow:hidden;position:relative;font-family:${font},system-ui;background:${c.bg};display:flex;flex-direction:column">${top}${body}${dlg}${bio}${over}</div>`;
+const s=document.getElementById('sc');if(s)s.scrollTop=keep;}
+</script></body></html>

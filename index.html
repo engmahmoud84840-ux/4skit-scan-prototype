@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ar"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<title>4SKIT Scan</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000;overscroll-behavior:none}
+iframe{position:fixed;inset:0;width:100%;height:100%;border:0;display:none;background:transparent}
+#splash,#end{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10}
+#end{display:none;flex-direction:column;gap:16px;font-family:'IBM Plex Sans Arabic',Inter,system-ui;text-align:center;padding:24px}
+@keyframes fo{to{opacity:0}}
+</style></head><body>
+<div id="splash"></div><div id="end"></div>
+<script>
+const MARK=`<path d="M21 12C22.1046 13.1046 22.1046 14.8954 21 16L10.5121 26.4879C10.3231 26.6769 10.457 27 10.7243 27H18C19.6569 27 21 28.3431 21 30V35C21 36.6569 19.6569 38 18 38C16.3431 38 15 36.6569 15 35V32.5C15 32.2239 14.7761 32 14.5 32H5.0645C3.79924 32 2.64257 31.2851 2.07673 30.1535C1.43372 28.8674 1.68577 27.3142 2.70246 26.2975L17 12C18.1046 10.8954 19.8954 10.8954 21 12Z" fill="white"/><path d="M45.9222 11C46.0879 11 46.2222 11.1343 46.2222 11.3V12.9C46.2222 14.833 44.6552 16.4 42.7222 16.4H33.4575C32.3569 16.4 31.3664 17.0681 30.9541 18.0885C30.692 18.7374 30.692 19.4626 30.9541 20.1115C31.3664 21.1319 32.3569 21.8 33.4575 21.8H38.4158C40.3891 21.8 42.31 22.4351 43.8943 23.6115L44.2467 23.8731C45.2771 24.6383 46.0942 25.6548 46.6198 26.8257C47.4977 28.7812 47.4977 31.0188 46.6198 32.9743C46.0942 34.1452 45.2771 35.1617 44.2467 35.9268L43.8943 36.1885C42.31 37.3648 40.3891 38 38.4158 38H26.0778C25.9121 38 25.7778 37.8657 25.7778 37.7V36.1C25.7778 34.167 27.3448 32.6 29.2778 32.6H38.5425C39.6431 32.6 40.6336 31.9319 41.0459 30.9115C41.308 30.2626 41.308 29.5374 41.0459 28.8885C40.6336 27.8681 39.6431 27.2 38.5425 27.2H33.5842C31.6109 27.2 29.69 26.5648 28.1057 25.3885L27.7533 25.1269C26.7229 24.3617 25.9058 23.3452 25.3802 22.1743C24.5023 20.2188 24.5023 17.9812 25.3802 16.0257C25.9058 14.8548 26.7229 13.8383 27.7533 13.0731L28.1057 12.8115C29.69 11.6352 31.6109 11 33.5842 11H45.9222Z" fill="#16F1E0"/>`;
+const dark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const phoneLang=(navigator.language||'en').toLowerCase().startsWith('ar')?'ar':'en';
+const APP={lang:phoneLang,phoneLang,pages:[],sel:new Set(),flash:'ic_flash_auto',sound:true,cur:null,uid:0,sid:1,lastExport:null,MAX:100,
+FIX:[[.06,.06],[.94,.06],[.94,.94],[.06,.94]],FULL:[[0,0],[1,0],[1,1],[0,1]]};
+window.APP=APP;
+// الفلاتر تقريبية بتأثيرات المتصفح (D-783)
+APP.FLT=(f,br)=>{const b={auto:'brightness(1.1) contrast(1.3) saturate(1.15)',color:'brightness(1.1) contrast(1.3) saturate(1.15)',gray:'grayscale(1) brightness(1.1) contrast(1.3)',bw:'grayscale(1) brightness(1.3) contrast(3.2)',orig:''}[f];return (b+` brightness(${1+br/100})`).trim();};
+const IMG={};
+APP.loadImg=src=>IMG[src]||(IMG[src]=new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src;}));
+// القص: الأركان الأربعة تتفرد لمستطيل (شبكة مثلثات)، ثم التدوير والفلتر
+function warp(im,c,max){const W=im.naturalWidth,H=im.naturalHeight,q=c.map(p=>[p[0]*W,p[1]*H]),d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+let ow=(d(q[0],q[1])+d(q[3],q[2]))/2,oh=(d(q[0],q[3])+d(q[1],q[2]))/2;const k=Math.min(1,max/Math.max(ow,oh,1));ow=Math.max(1,Math.round(ow*k));oh=Math.max(1,Math.round(oh*k));
+const cv=document.createElement('canvas');cv.width=ow;cv.height=oh;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,ow,oh);
+const S=(u,v)=>[(1-v)*((1-u)*q[0][0]+u*q[1][0])+v*((1-u)*q[3][0]+u*q[2][0]),(1-v)*((1-u)*q[0][1]+u*q[1][1])+v*((1-u)*q[3][1]+u*q[2][1])];
+const tri=(s,t)=>{const [x0,y0]=s[0],[x1,y1]=s[1],[x2,y2]=s[2],[u0,v0]=t[0],[u1,v1]=t[1],[u2,v2]=t[2],den=(x1-x0)*(y2-y0)-(x2-x0)*(y1-y0);if(!den)return;
+const a=((u1-u0)*(y2-y0)-(u2-u0)*(y1-y0))/den,b=((u2-u0)*(x1-x0)-(u1-u0)*(x2-x0))/den,cc=((v1-v0)*(y2-y0)-(v2-v0)*(y1-y0))/den,dd=((v2-v0)*(x1-x0)-(v1-v0)*(x2-x0))/den;
+const cx=(u0+u1+u2)/3,cy=(v0+v1+v2)/3,g=p=>{const l=Math.hypot(p[0]-cx,p[1]-cy)||1;return [p[0]+(p[0]-cx)/l*.7,p[1]+(p[1]-cy)/l*.7];};
+x.save();x.beginPath();x.moveTo(...g(t[0]));x.lineTo(...g(t[1]));x.lineTo(...g(t[2]));x.closePath();x.clip();x.setTransform(a,cc,b,dd,u0-a*x0-b*y0,v0-cc*x0-dd*y0);
+const mx=Math.max(0,Math.min(x0,x1,x2)-2),my=Math.max(0,Math.min(y0,y1,y2)-2),Mx=Math.min(W,Math.max(x0,x1,x2)+2),My=Math.min(H,Math.max(y0,y1,y2)+2);
+if(Mx>mx&&My>my)x.drawImage(im,mx,my,Mx-mx,My-my,mx,my,Mx-mx,My-my);x.restore();};
+const N=10;for(let i=0;i<N;i++)for(let j=0;j<N;j++){const s00=S(i/N,j/N),s10=S((i+1)/N,j/N),s01=S(i/N,(j+1)/N),s11=S((i+1)/N,(j+1)/N),
+d00=[i*ow/N,j*oh/N],d10=[(i+1)*ow/N,j*oh/N],d01=[i*ow/N,(j+1)*oh/N],d11=[(i+1)*ow/N,(j+1)*oh/N];tri([s00,s10,s11],[d00,d10,d11]);tri([s00,s11,s01],[d00,d11,d01]);}
+return cv;}
+APP.renderRaw=async(src,c,rot,max,filter)=>{const im=await APP.loadImg(src),w=warp(im,c,max),dw=w.width,dh=w.height,r=((rot%360)+360)%360,sw2=r%180?dh:dw,sh2=r%180?dw:dh;
+const cv=document.createElement('canvas');cv.width=sw2;cv.height=sh2;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,sw2,sh2);
+x.filter=filter||'none';x.translate(sw2/2,sh2/2);x.rotate(r*Math.PI/180);x.drawImage(w,-dw/2,-dh/2);return cv.toDataURL('image/jpeg',.85);};
+APP.makeImg=async p=>{p.ld=false;const key=[p.src.length,p.c.join(),p.rot,p.f,p.br].join('|');p.key=key;
+try{const u=await APP.renderRaw(p.src,p.c,p.rot,900,APP.FLT(p.f,p.br));if(p.key!=key)return;p.img=u;p.ld=true;p.broken=false;}catch(e){p.broken=true;p.ld=true;}
+for(const n of ['pages','export'])if(APP.cur==n&&F[n].contentWindow.draw)F[n].contentWindow.draw();};
+APP.downscale=async(src,max)=>{const im=await APP.loadImg(src),W=im.naturalWidth,H=im.naturalHeight,k=Math.min(1,(max||1600)/Math.max(W,H));
+const cv=document.createElement('canvas');cv.width=Math.round(W*k);cv.height=Math.round(H*k);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);delete IMG[src];return {src:cv.toDataURL('image/jpeg',.88),w:cv.width,h:cv.height};};
+APP.fileToPhoto=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>APP.downscale(r.result).then(ok,no);r.onerror=no;r.readAsDataURL(f);});
+APP.newPage=(ph,s)=>{const p={id:++APP.uid,src:ph.src,w:ph.w,h:ph.h,f:s.f,br:s.br,rot:s.rot,c:s.c.map(a=>a.slice()),init:{f:'auto',br:0,rot:0,c:(s.c0||APP.FIX).map(a=>a.slice())},ld:false};APP.makeImg(p);return p;};
+// ملف PDF: صفحاته تدخل إدارة الصفحات مباشرة (D-011)
+let pdfLib=null;
+const loadPdfLib=()=>pdfLib||(pdfLib=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';ok(pdfjsLib);};s.onerror=no;document.head.appendChild(s);}));
+APP.addPdf=async(file,prog,stop)=>{const lib=await loadPdfLib(),doc=await lib.getDocument({data:await file.arrayBuffer()}).promise,room=APP.MAX-APP.pages.length;
+if(doc.numPages>room)return {err:'limit',x:doc.numPages,r:room};const out=[];prog(0,doc.numPages);
+for(let i=1;i<=doc.numPages;i++){if(stop())return {n:0};prog(i-1,doc.numPages);const pg=await doc.getPage(i),v0=pg.getViewport({scale:1}),k=1600/Math.max(v0.width,v0.height),v=pg.getViewport({scale:k});
+const cv=document.createElement('canvas');cv.width=v.width;cv.height=v.height;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);await pg.render({canvasContext:x,viewport:v}).promise;
+const ph={src:cv.toDataURL('image/jpeg',.88),w:cv.width,h:cv.height};out.push(APP.newPage(ph,{f:'orig',br:0,rot:0,c:APP.FULL,c0:APP.FULL}));}
+if(stop())return {n:0};prog(doc.numPages,doc.numPages);APP.pages.push(...out);return {n:out.length};};
+// "مستند جديد": الجلسة تتحذف بعد مهلة التراجع (D-087، D-092)
+APP.newDoc=()=>{clearTimeout(APP.nd);APP.bak={pages:APP.pages,sel:APP.sel,sid:APP.sid};APP.pages=[];APP.sel=new Set();APP.sid++;APP.nd=setTimeout(()=>{APP.bak=null;},10000);};
+APP.undoNewDoc=()=>{clearTimeout(APP.nd);if(!APP.bak)return;Object.assign(APP,{pages:APP.bak.pages,sel:APP.bak.sel,sid:APP.bak.sid});APP.bak=null;go('success');};
+APP.endSession=()=>{APP.pages=[];APP.sel=new Set();APP.sid++;};
+const NAMES=['camera','processing','pages','export','success','settings'],F={};
+function go(n,a){const p=APP.cur;if(p&&p!=n){F[p].style.display='none';const w=F[p].contentWindow;w.onHide&&w.onHide();}
+F[n].style.display='block';APP.cur=n;document.querySelector('meta[name=theme-color]').content=n=='camera'?'#000000':dark()?'#1F2937':'#FFFFFF';F[n].contentWindow.onShow(a||{});}
+APP.setLang=l=>{APP.lang=l;document.documentElement.lang=l;NAMES.forEach(n=>{const w=F[n].contentWindow;if(n==APP.cur&&w.draw)w.draw();});};
+// زر الرجوع في أندرويد: كل شاشة تتعامل معه بـ onBack
+APP.armed=false;APP.arm=()=>{if(!APP.armed){history.pushState({p:1},'');APP.armed=true;}};
+addEventListener('popstate',()=>{APP.armed=false;const w=APP.cur&&F[APP.cur].contentWindow;if(w&&w.onBack)w.onBack();APP.arm();});
+APP.exitApp=()=>{const d=dark(),e=document.getElementById('end'),ar=APP.lang=='ar';NAMES.forEach(n=>F[n].style.display='none');F.camera.contentWindow.onHide();APP.cur=null;
+e.style.cssText+=`;display:flex;background:${d?'#111827':'#FFFFFF'};color:${d?'#F9FAFB':'#171A1A'}`;e.dir=ar?'rtl':'ltr';
+e.innerHTML=`<div style="font-size:20px;line-height:28px;font-weight:600">${ar?'انتهت التجربة':'The test has ended'}</div><div onclick="location.reload()" style="cursor:pointer;min-height:48px;display:flex;align-items:center;padding:0 24px;border-radius:12px;background:#0F6B6D;color:#fff;font-size:14px;font-weight:500">${ar?'فتح التطبيق مرة أخرى':'Open the app again'}</div>`;};
+function splash(){const s=document.getElementById('splash');s.style.background=dark()?'#111827':'#FFFFFF';
+s.innerHTML=`<div style="width:240px;height:240px;display:flex;align-items:center;justify-content:center"><div style="width:160px;height:160px;border-radius:50%;background:#0F6B6D;display:flex;align-items:center;justify-content:center;position:relative">
+<svg viewBox="0 0 100 100" width="104" height="104" style="position:absolute"><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M4 26V14a10 10 0 0 1 10-10h12"/><path d="M74 4h12a10 10 0 0 1 10 10v12"/><path d="M96 74v12a10 10 0 0 1-10 10H74"/><path d="M26 96H14A10 10 0 0 1 4 86V74"/></g></svg>
+<svg viewBox="0 0 49 48" width="58" height="57" style="position:relative">${MARK}</svg></div></div>`;}
+splash();document.documentElement.lang=APP.lang;
+const t0=Date.now();let left=NAMES.length;
+NAMES.forEach(n=>{const f=document.createElement('iframe');f.src=n+'.html?v='+t0;f.allow='camera';f.onload=()=>{if(--left==0)setTimeout(()=>{go('camera');const s=document.getElementById('splash');s.style.animation='fo .3s forwards';setTimeout(()=>s.remove(),300);},Math.max(0,1000-(Date.now()-t0)));};F[n]=f;document.body.appendChild(f);});
+</script></body></html>

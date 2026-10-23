@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.pr{cursor:pointer;position:relative}
+.pr:active:after{content:'';position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:.1}
+svg.i{width:24px;height:24px;display:block;flex:none}
+</style></head><body><div id="ph"></div>
+<script src="icons.js"></script><script src="common.js"></script>
+<script>
+const SCREEN='success';
+const T={ar:{open:'فتح الملف',openImg:'فتح الصور',share:'مشاركة',newDoc:'مستند جديد',back:'العودة إلى الصفحات',viewer:'تطبيق عرض الملف (من النظام)',shareSheet:'قائمة المشاركة في أندرويد (من النظام)',backSys:'رجوع'},
+en:{open:'Open file',openImg:'Open images',share:'Share',newDoc:'New document',back:'Back to pages',viewer:'File viewer app (system)',shareSheet:'Android share sheet (system)',backSys:'Back'}};
+let P={over:null},busy=false;
+function onShow(){P.over=null;busy=false;draw();}
+function onBack(){if(P.over){P.over=null;return draw();}act('back');}
+function act(k){if(busy)return;if(k=='open')P.over='viewer';else if(k=='share')P.over='share';
+else if(k=='new'){busy=true;APP.newDoc();return go('camera',{snack:'dm'});}
+else if(k=='back'){busy=true;return go('pages');}draw();}
+function draw(){const e=APP.lastExport;if(!e)return;const t=T[S.lang],W=VW(),H=VH(),ar=S.lang=='ar',c=C(),font=ar?"'IBM Plex Sans Arabic'":"Inter",img=e.fmt=='img';
+const loc=`<span dir="ltr" style="unicode-bidi:isolate">${e.loc}</span>`;
+const titleH=img?(ar?`تم حفظ ${e.k} صور في ${loc}`:`${e.k} images saved to ${loc}`):(ar?`تم الحفظ في ${loc}`:`Saved to ${loc}`);
+const name=img?`<span style="unicode-bidi:plaintext">${e.name}_1.jpg</span>${e.k>1?` – <span style="unicode-bidi:plaintext">${e.name}_${e.k}.jpg</span>`:''}`:`<span style="unicode-bidi:plaintext">${e.name}.pdf</span>`;
+const b=(kind,icn,label,style)=>`<div onclick="act('${kind}')" class="pr" style="${style};min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 16px;box-sizing:border-box;border-radius:12px;font-size:14px;line-height:20px;font-weight:500">${icn?ic(icn):''}<span>${label}</span></div>`;
+const sec=`background:${c.sec};color:${c.pri};flex:1;min-width:120px`;
+const center=`<div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:24px 16px"><div style="margin:auto 0;display:flex;flex-direction:column;align-items:center;text-align:center">
+<div style="color:${c.pri}">${ic('ic_check_circle',64)}</div>
+<div style="margin-top:16px;font-size:20px;line-height:28px;font-weight:600;color:${c.tx}" aria-live="polite">${titleH}</div>
+<div id="nm" data-lh="20" style="margin-top:8px;font-size:14px;line-height:20px;color:${c.t2};word-break:break-word;max-width:100%">${name}</div>
+<div style="margin-top:24px;align-self:stretch;display:flex;flex-wrap:wrap;gap:8px 12px">${b('open','ic_open_in_new',img?t.openImg:t.open,sec)}${b('share','ic_share',t.share,sec)}</div></div></div>`;
+const bottom=`<div style="flex:none;display:flex;flex-direction:column;gap:8px;padding:12px 16px 16px">${b('new','ic_scan_new',t.newDoc,`background:${c.pri};color:${c.on}`)}${b('back','',t.back,`color:${c.pri}`)}</div>`;
+let over='';if(P.over){const m={viewer:t.viewer,share:t.shareSheet}[P.over];over=`<div style="position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:${P.over=='share'?'flex-end':'center'};align-items:center;gap:12px;color:#fff;font-size:14px"><div style="${P.over=='share'?`background:${c.dlg};color:${c.tx};width:100%;border-radius:28px 28px 0 0;padding:32px 16px;text-align:center`:''}">${m}</div><div onclick="P.over=null;draw()" class="pr" style="${P.over=='share'?'position:absolute;top:16px;':''}background:#fff;color:#111;border-radius:12px;padding:8px 16px;font-weight:500">${t.backSys}</div></div>`;}
+document.getElementById('ph').innerHTML=`<div dir="${ar?'rtl':'ltr'}" style="width:${W}px;height:${H}px;overflow:hidden;position:relative;font-family:${font},system-ui;background:${c.bg};display:flex;flex-direction:column">${center}${bottom}${over}</div>`;
+const nm=document.getElementById('nm');if(nm){const lh=+nm.dataset.lh;nm.querySelectorAll('span').forEach(sp=>{const full=sp.textContent,dot=full.lastIndexOf('.'),base=full.slice(0,dot),ext=full.slice(dot);let cut=0;while(nm.offsetHeight>lh*2+1&&cut<base.length-2){cut++;const kept=base.length-cut,h=Math.ceil(kept/2);sp.textContent=base.slice(0,h)+'…'+base.slice(base.length-(kept-h))+ext;}});}}
+</script></body></html>

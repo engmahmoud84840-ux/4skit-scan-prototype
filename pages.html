@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.ib{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;flex:none}
+.pr{cursor:pointer;position:relative}
+.pr:active:after{content:'';position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:.1}
+.grid{scrollbar-width:thin}
+svg.i{width:24px;height:24px;display:block;flex:none}
+@keyframes dr{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes sp{to{transform:rotate(360deg)}}
+.card{user-select:none;-webkit-user-select:none;touch-action:pan-y}
+img{-webkit-user-drag:none}
+</style></head><body><div id="ph"></div>
+<script src="icons.js"></script><script src="common.js"></script>
+<script>
+const SCREEN='pages';
+const T={ar:{title:n=>`الصفحات (${n})`,selT:(k,n)=>`تم تحديد ${k} من ${n}`,all:'تحديد الكل',rot:'تدوير',edit:'تعديل',rt:'إعادة التصوير',del:'حذف',exp:'تصدير',so:'البدء من جديد',cam:'الكاميرا',photo:'صورة',pdf:'PDF',add:'إضافة صفحة',undo:'تراجع',perm:'حذف نهائي',delBar:n=>`حُذفت ${arN(n)}`,permDone:'تم الحذف النهائي',empty:'لا توجد صفحات بعد. صوّر صفحة أو أضف صورة أو ملف PDF.',zn:(x,t)=>`${x} من ${t}`,bz:'تعذّر عرض الصفحة.',editOff:'تعذّر عرض هذه الصفحة. أعد تصويرها لتتمكن من تعديلها.',rotOff1:'تعذّر عرض هذه الصفحة. أعد تصويرها لتتمكن من تدويرها.',rotOffN:n=>`تعذّر عرض الصفحة ${n}. ألغِ تحديدها لتدوير باقي الصفحات.`,lim:n=>`وصلت الجلسة إلى الحد الأقصى (${n} صفحة). احذف صفحات لإضافة غيرها.`,undoLim:n=>`تعذّر استرجاع الصفحة. وصلت الجلسة إلى الحد الأقصى (${n} صفحة).`,dT:'البدء من جديد؟',dB:n=>`سيتم حذف ${arN(n)} نهائيًا. صدّرها أولًا إن كنت تحتاجها.`,cancel:'إلغاء',ef:'تصدير أولًا',ds:'حذف والبدء من جديد',
+rep:'تم استبدال الصفحة',dis:'تم إلغاء التعديلات',bi:'تعذّر فتح الصورة. ربما تكون تالفة.',pp:'الملف محمي بكلمة مرور ولا يمكن فتحه.',pd:'تعذّر فتح الملف. ربما يكون تالفًا.',pl2:(x,r)=>`لا يمكن إضافة ${x} صفحة. يتبقى في الجلسة مكان لـ${r} صفحة فقط.`,padd:(x,t)=>`جارٍ إضافة الصفحات… ${x} من ${t}`,aX:'العودة إلى الكاميرا',aZ:'تكبير الصفحة'},
+en:{title:n=>`Pages (${n})`,selT:(k,n)=>`${k} of ${n} selected`,all:'Select all',rot:'Rotate',edit:'Edit',rt:'Retake',del:'Delete',exp:'Export',so:'Start over',cam:'Camera',photo:'Photo',pdf:'PDF',add:'Add page',undo:'Undo',perm:'Delete forever',delBar:n=>`${n} ${n==1?'page':'pages'} deleted`,permDone:'Deleted forever',empty:'No pages yet. Scan a page or add a photo or PDF.',zn:(x,t)=>`${x} of ${t}`,bz:"Couldn't show this page.",editOff:"Couldn't show this page. Retake it to edit it.",rotOff1:"Couldn't show this page. Retake it to rotate it.",rotOffN:n=>`Couldn't show page ${n}. Deselect it to rotate the others.`,lim:n=>`Session limit reached (${n} pages). Delete pages to add more.`,undoLim:n=>`Couldn't restore the page. Session limit reached (${n} pages).`,dT:'Start over?',dB:n=>`${n} ${n==1?'page':'pages'} will be permanently deleted. Export them first if you need them.`,cancel:'Cancel',ef:'Export first',ds:'Delete and start over',
+rep:'Page replaced',dis:'Changes discarded',bi:"Couldn't open this image. It may be damaged.",pp:"This file is password-protected and can't be opened.",pd:"Couldn't open this file. It may be damaged.",pl2:(x,r)=>`Can't add ${x} pages. Only ${r} more pages fit in this session.`,padd:(x,t)=>`Adding pages… ${x} of ${t}`,aX:'Back to camera',aZ:'Enlarge page'}};
+const MAX=APP.MAX;let P={del:[],perm:false,zoom:null,zsel:null,dlg:false,snack:null,drag:null,pdf:null,sid:0},snT=null,snK=null;
+const PG=()=>APP.pages,SEL=()=>APP.sel;
+function onShow(a){if(P.sid!=APP.sid){P.del=[];P.perm=false;P.sid=APP.sid;}P.zoom=null;P.zsel=null;P.dlg=false;P.snack=null;
+if(a.snack=='replaced')P.snack={m:T[S.lang].rep,a:T[S.lang].undo,fn:'undoRep()',d:10000};
+if(a.snack=='discarded')P.snack={m:T[S.lang].dis,a:T[S.lang].undo,fn:"go('processing',{mode:'resume'})",d:10000};
+draw();if(a.end)setTimeout(()=>{const g=document.getElementById('grid');if(g)g.scrollTop=g.scrollHeight;},0);}
+function onBack(){if(P.pdf){P.pdf=null;return draw();}if(P.dlg){P.dlg=false;return draw();}if(P.zoom!=null)return zclose();go('camera');}
+function undoRep(){const b=APP.replBak;P.snack=null;if(b){const pg=PG().find(p=>p.id==b.id);if(pg){Object.assign(pg,b.old);APP.makeImg(pg);}APP.replBak=null;}draw();}
+function snack(msg,act,c,fn){return `<div style="background:${c.sb};border-radius:8px;min-height:48px;display:flex;align-items:center;gap:8px;padding-inline:16px 8px"><span style="flex:1;font-size:14px;line-height:20px;color:${c.st};padding:14px 0">${msg}</span>${act?`<span onclick="${fn}" class="pr" style="color:${c.sa};font-weight:500;font-size:14px;line-height:20px;min-height:48px;display:flex;align-items:center;padding:0 8px;white-space:nowrap">${act}</span>`:''}</div>`;}
+function info(m){P.snack={m,d:4000};draw();}
+function cb(state,c,dis){const on=state!='off';return `<span style="width:18px;height:18px;flex:none;box-sizing:border-box;border-radius:2px;display:flex;align-items:center;justify-content:center;${on?`background:${c.pri};`:`border:2px solid ${c.t2};`}${dis?'opacity:.38;':''}">${state=='on'?`<svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="${c.on}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`:state=='mix'?`<span style="width:10px;height:2px;background:${c.on};border-radius:1px"></span>`:''}</span>`;}
+const ratio=p=>{const q=p.c.map(a=>[a[0]*p.w,a[1]*p.h]),d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),w=(d(q[0],q[1])+d(q[3],q[2]))/2,h=(d(q[0],q[3])+d(q[1],q[2]))/2;return p.rot%180?w/h:h/w;};
+const tot=()=>PG().length,full=()=>tot()>=MAX;
+function selState(){const n=tot(),k=SEL().size;return !n||!k?'off':k==n?'on':'mix';}
+function zclose(){if(P.zoom==null)return;APP.sel=P.zsel||new Set();P.zoom=null;P.zsel=null;draw();}
+function openZoom(i){P.zsel=new Set(SEL());P.zoom=i;P.snack=null;draw();}
+function tap(id){if(SEL().has(id))SEL().delete(id);else SEL().add(id);P.snack=null;draw();}
+function selAll(){if(P.zoom!=null)return zclose();if(!tot())return;if(selState()=='on')SEL().clear();else PG().forEach(p=>SEL().add(p.id));draw();}
+const target=()=>P.zoom!=null?[PG()[P.zoom]]:PG().filter(p=>SEL().has(p.id));
+function doRot(){const t=target();if(!t.length)return;const b=t.filter(p=>p.broken);if(b.length)return info(t.length==1?T[S.lang].rotOff1:T[S.lang].rotOffN(b.map(p=>PG().indexOf(p)+1).join('، ')));t.forEach(p=>{p.rot+=90;APP.makeImg(p);});P.snack=null;draw();}
+function doEdit(){const t=target();if(t.length!=1)return;if(t[0].broken)return info(T[S.lang].editOff);go('processing',{mode:'edit',pageId:t[0].id});}
+function doRetake(){const t=target();if(t.length!=1)return;go('camera',{mode:'retake',pageId:t[0].id,from:'pages'});}
+function doDel(){const t=target();if(!t.length)return;t.slice().sort((a,b)=>PG().indexOf(a)-PG().indexOf(b)).forEach(p=>{P.del.push({p,idx:PG().indexOf(p)});});APP.pages=PG().filter(p=>!t.includes(p));t.forEach(p=>SEL().delete(p.id));P.perm=false;P.snack=null;
+if(P.zoom!=null){if(!tot()){P.zoom=null;P.zsel=null;SEL().clear();}else{t.forEach(p=>P.zsel&&P.zsel.delete(p.id));if(P.zoom>=tot())P.zoom=tot()-1;}}else SEL().clear();draw();}
+function doUndo(){if(P.zoom!=null)return zclose();if(P.perm){P.perm=false;P.del=P.permBak;P.permBak=null;clearTimeout(P.pt);return draw();}
+if(full())return info(T[S.lang].undoLim(MAX));const d=P.del.pop();if(!d)return;const i=Math.min(d.idx,tot());PG().splice(i,0,d.p);draw();setTimeout(()=>{const e=document.querySelector(`[data-id="${d.p.id}"]`);if(e)e.scrollIntoView({block:'nearest',behavior:'smooth'});flashEl(d.p.id);},0);}
+function doPerm(){if(P.zoom!=null)return zclose();P.permBak=P.del;P.del=[];P.perm=true;P.ps=Date.now();clearTimeout(P.pt);P.pt=setTimeout(()=>{P.perm=false;P.permBak=null;draw();},10000);draw();}
+function addCam(){if(P.zoom!=null)return zclose();if(full())return info(T[S.lang].lim(MAX));go('camera');}
+function addPhoto(){if(P.zoom!=null)return zclose();if(full())return info(T[S.lang].lim(MAX));pick('image/*',f=>APP.fileToPhoto(f).then(ph=>go('processing',{mode:'new',photo:ph}),()=>info(T[S.lang].bi)));}
+function addPdf(){if(P.zoom!=null)return zclose();if(full())return info(T[S.lang].lim(MAX));const t=T[S.lang];pick('application/pdf,.pdf',async f=>{P.pdf={x:0,t:0};draw();
+try{const r=await APP.addPdf(f,(x,n)=>{if(P.pdf){P.pdf={x,t:n};draw();}},()=>!P.pdf);if(!P.pdf)return;P.pdf=null;if(r.err=='limit')return info(t.pl2(r.x,r.r));draw();setTimeout(()=>{const g=document.getElementById('grid');if(g)g.scrollTop=g.scrollHeight;},0);}
+catch(e){const was=P.pdf;P.pdf=null;draw();if(was)info(e&&e.name=='PasswordException'?t.pp:t.pd);}});}
+function doExp(){if(P.zoom!=null)return zclose();if(!tot())return;if(!SEL().size)PG().forEach(p=>SEL().add(p.id));go('export',{from:'pages'});}
+function soTap(){if(P.zoom!=null)return zclose();if(!tot())return;P.dlg=true;draw();}
+function dlgEnd(k){P.dlg=false;if(k=='del'){APP.endSession();P.del=[];P.perm=false;P.sid=APP.sid;return go('camera');}if(k=='exp')return doExp();draw();}
+function swipe(dx){const ar=S.lang=='ar',nx=ar?dx>0:dx<0,z=P.zoom+(nx?1:-1);if(z>=0&&z<tot()){P.zoom=z;draw();}}
+function flashEl(id){const e=document.querySelector(`[data-id="${id}"]`);if(!e)return;const c=C(),on=S.mode=='dark'?'rgba(125,211,211,.22)':'rgba(15,107,109,.16)',t=2000;
+e.animate([{background:c.bar,easing:'cubic-bezier(.05,.7,.1,1)'},{background:on,offset:.15},{background:on,offset:.5,easing:'cubic-bezier(0,0,0,1)'},{background:c.bar}],{duration:t});}
+let lp=null;
+function cardDown(ev,id){if(P.zoom!=null||ev.button>0)return;const x0=ev.clientX,y0=ev.clientY,g=document.getElementById('grid'),el=ev.currentTarget;let moved=false,gx=0,gy=0,lx=x0,ly=y0,raf=null;
+const place=()=>{const r=g.getBoundingClientRect(),sx=r.left+el.offsetLeft-g.scrollLeft,sy=r.top+el.offsetTop-g.scrollTop;el.style.transform=`translate(${lx-gx-sx}px,${ly-gy-sy}px) scale(1.06)`;};
+const nums=()=>[...g.querySelectorAll('[data-id]')].forEach((c,k)=>{const n=c.querySelector('.num');if(n)n.textContent=k+1;});
+const reorder=c=>{const cards=[...g.querySelectorAll('[data-id]')].filter(x=>x!==el),before=new Map(cards.map(x=>[x,x.getBoundingClientRect()]));
+const from=PG().findIndex(p=>p.id==id),to=PG().findIndex(p=>p.id==+c.dataset.id);const [pp]=PG().splice(from,1);PG().splice(to,0,pp);
+if(from<to)c.after(el);else c.before(el);
+cards.forEach(x=>{const a=before.get(x),b=x.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top;if(!dx&&!dy)return;x.style.transition='none';x.style.transform=`translate(${dx}px,${dy}px)`;x.getBoundingClientRect();x.style.transition='transform 200ms cubic-bezier(.2,0,0,1)';x.style.transform='';});nums();place();};
+const tick=()=>{raf=null;const r=g.getBoundingClientRect();let sc=0;if(ly<r.top+48)sc=-8;else if(ly>r.bottom-48)sc=8;if(sc){g.scrollTop+=sc;place();hit();raf=requestAnimationFrame(tick);}};
+const hit=()=>{const r=g.getBoundingClientRect(),px=lx-r.left+g.scrollLeft,py=ly-r.top+g.scrollTop;const c=[...g.querySelectorAll('[data-id]')].find(x=>px>=x.offsetLeft&&px<x.offsetLeft+x.offsetWidth&&py>=x.offsetTop&&py<x.offsetTop+x.offsetHeight);if(c&&c!==el)reorder(c);};
+const mv=m=>{lx=m.clientX;ly=m.clientY;if(P.drag==null){if(Math.hypot(lx-x0,ly-y0)>8){moved=true;clearTimeout(lp);}return;}m.preventDefault();el.style.transition='box-shadow 150ms';place();hit();if(!raf)raf=requestAnimationFrame(tick);};
+const up=()=>{clearTimeout(lp);document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up);if(raf)cancelAnimationFrame(raf);
+if(P.drag!=null){el.style.transition='transform 150ms cubic-bezier(.2,0,0,1),box-shadow 150ms';el.style.transform='';el.style.boxShadow='';setTimeout(()=>{P.drag=null;draw();},160);}else if(!moved)tap(id);};
+document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
+lp=setTimeout(()=>{P.drag=id;if(navigator.vibrate)navigator.vibrate(10);const r=el.getBoundingClientRect();gx=x0-r.left;gy=y0-r.top;el.style.zIndex=10;el.style.pointerEvents='none';el.style.transition='transform 150ms,box-shadow 150ms';el.style.boxShadow='0 8px 20px rgba(0,0,0,.28)';place();},450);}
+document.addEventListener('contextmenu',e=>e.preventDefault());
+function draw(){const t=T[S.lang],fz=1,W=VW(),H=VH(),ar=S.lang=='ar',c=C();
+const g0=document.getElementById('grid'),keepScroll=g0?g0.scrollTop:0;
+const font=ar?"'IBM Plex Sans Arabic'":"Inter",n=tot(),k=SEL().size,zm=P.zoom!=null,empty=!n,lim=full();
+const Z=f=>zm?'zclose()':f;
+const title=zm?t.zn(P.zoom+1,n):k?t.selT(k,n):t.title(n);
+const tgt=zm?[PG()[P.zoom]]:PG().filter(p=>SEL().has(p.id)),one=tgt.length==1,many=tgt.length>1,brk=one&&tgt[0].broken;
+const tool=(icn,label,fn,off,soft)=>`<div ${off&&!soft?'':`onclick="${fn}"`} class="${off&&!soft?'':'pr'}" style="flex:1;min-width:0;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:12px;min-height:48px;color:${zm&&!off?c.pri:c.tx};${off?'opacity:.38;':''}">${off?ic('ic_block'):ic(icn)}<div style="font-size:12px;line-height:16px;text-align:center;font-weight:500">${label}</div></div>`;
+const tb=(label,fn,col)=>`<div onclick="${fn}" class="pr" style="min-height:48px;display:flex;align-items:center;padding:0 12px;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;color:${col||c.pri};white-space:nowrap">${label}</div>`;
+const db=(label,fn,col)=>`<div onclick="${fn}" class="pr" style="min-height:48px;display:flex;align-items:center;padding:4px 12px;box-sizing:border-box;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;color:${col||c.pri};text-align:start">${label}</div>`;
+const soOff=empty;
+const soBtn=`<div ${soOff?'':`onclick="soTap()"`} class="${soOff?'':'pr'}" style="display:flex;align-items:center;gap:6px;min-height:48px;padding:0 12px 0 10px;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;color:${c.tx};white-space:nowrap;${soOff?'opacity:.38':''}">${soOff?ic('ic_block'):ic('ic_start_over')}${t.so}</div>`;
+const xBtn=`<div onclick="${zm?'zclose()':"go('camera')"}" class="ib pr" style="color:${c.tx}" aria-label="${t.aX}">${ic('ic_close')}</div>`;
+const ttl=`<div style="font-weight:600;font-size:20px;line-height:28px;white-space:nowrap;color:${c.tx}">${title}</div>`;
+const top=`<div style="min-height:64px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 4px;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none"><div style="justify-self:start">${xBtn}</div>${ttl}<div style="justify-self:end">${soBtn}</div></div>`;
+const delN=P.del.length;
+const dwrap=(txt,btns,tm)=>`<div style="position:relative;overflow:hidden;margin:8px 16px 0;background:${c.ph};border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;gap:0 4px;padding:0 4px 0 12px;flex:none;color:${c.tx}"><div style="flex:1 1 auto;display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;padding:14px 0"><span>${txt}</span></div><div style="display:flex;flex-wrap:wrap;flex:0 1 auto;max-width:100%;margin-inline-start:auto">${btns}</div>${tm?`<div style="position:absolute;bottom:0;inset-inline:0;height:3px;background:${c.pri};transform-origin:${ar?'right':'left'};animation:dr 10s linear forwards;animation-delay:-${(Date.now()-P.ps)/1000}s"></div>`:''}</div>`;
+const dbar=P.perm?dwrap(t.permDone,tb(t.undo,'doUndo()'),1):delN?dwrap(t.delBar(delN),tb(t.undo,'doUndo()')+tb(t.perm,'doPerm()')):'';
+const sa=`<div onclick="selAll()" class="${empty?'':'pr'}" style="display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;flex:none;color:${c.tx};font-size:14px;line-height:20px;font-weight:500;${empty?'opacity:.38;':''}">${cb(selState(),c,false)}<span>${t.all}</span></div>`;
+const thumbPage=p=>`<div style="position:absolute;inset:0;background:${c.ph};overflow:hidden"><img src="${p.img}" style="display:block;width:100%" draggable="false"></div>`;
+const cols=3;
+const card=(p,i)=>{const on=SEL().has(p.id);const th=p.broken?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:${c.ph};color:${c.t2}">${ic('ic_broken_image',32)}</div>`
+:!p.ld||!p.img?`<div style="position:absolute;inset:0;background:${c.ph};display:flex;align-items:center;justify-content:center"><div style="width:20px;height:20px;border-radius:50%;border:2.5px solid ${c.bd};border-top-color:${c.pri};animation:sp 1s linear infinite"></div></div>`
+:thumbPage(p);
+return `<div class="card" data-id="${p.id}" onpointerdown="cardDown(event,${p.id})" style="position:relative;border-radius:12px;background:${c.bar};box-sizing:border-box;border:${on?`2px solid ${c.pri}`:`1px solid ${c.bd}`};padding:${on?0:1}px;cursor:pointer;">
+<div style="height:24px;display:flex;justify-content:center;align-items:center;color:${c.t2}">${ic('ic_drag',24)}</div>
+<div style="position:relative;aspect-ratio:.8;margin:0 6px;outline:1px solid ${c.bd};outline-offset:0"><div style="position:absolute;inset:0;overflow:hidden">${th}</div></div>
+<div style="display:flex;align-items:center;gap:6px;height:40px;padding-inline:8px 2px;color:${c.tx}">${cb(on?'on':'off',c)}<span style="flex:1;font:500 13px/18px Inter,system-ui;color:${c.tx};text-align:center" class="num">${i+1}</span><div onpointerdown="event.stopPropagation()" onclick="event.stopPropagation();openZoom(${i})" class="pr" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:20px;color:${c.tx}" aria-label="${t.aZ} ${i+1}">${ic('ic_enlarge',24)}</div></div></div>`;};
+const addTile=`<div onclick="addCam()" class="pr" style="border-radius:12px;border:1.5px dashed ${c.t2};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:150px;color:${c.tx};${lim?'opacity:.38;':''}">${lim?ic('ic_block'):ic('ic_scan_new',24)}<div style="font-size:14px;line-height:20px;font-weight:500;text-align:center;padding:0 6px">${t.add}</div></div>`;
+const grid=`<div id="grid" class="grid" style="position:absolute;inset:0;overflow-y:auto;padding:4px 16px 16px;box-sizing:border-box;display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:12px;align-content:start">${empty?`<div style="grid-column:1/-1;font-size:14px;line-height:20px;color:${c.t2};padding:8px 0 4px">${t.empty}</div>`:''}${PG().map(card).join('')}${addTile}</div>`;
+let zv='';if(zm){const p=PG()[P.zoom];zv=`<div onclick="zclose()" style="position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:4"></div><div id="zp" style="position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:var(--zw);aspect-ratio:1/${ratio(p)};touch-action:none">${p.broken||!p.img?`<div style="width:100%;height:100%;background:${c.ph};display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;color:${c.t2};font-size:14px">${ic('ic_broken_image',48)}<div style="text-align:center;padding:0 16px;line-height:20px">${t.bz}</div></div>`:`<img src="${p.img}" style="display:block;width:100%;height:100%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)" draggable="false">`}</div>`;}
+const sn=P.snack?snack(P.snack.m,P.snack.a,c,P.snack.fn):'';
+const pageTools=`<div style="display:flex;padding:4px 8px;${zm?`background:${c.sec};`:''}">${tool('ic_rotate',t.rot,'doRot()',!(one||many),brk)}${tool('ic_edit',t.edit,'doEdit()',!one||brk,brk)}${tool('ic_retake',t.rt,'doRetake()',!one)}${tool('ic_delete',t.del,'doDel()',!(one||many))}</div>`;
+const addT=(icn,label,fn)=>`<div onclick="${fn}" class="pr" style="flex:none;min-width:64px;padding:6px 6px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:12px;min-height:48px;color:${c.tx};${lim?'opacity:.38;':''}">${lim?ic('ic_block'):ic(icn)}<div style="font-size:12px;line-height:16px;font-weight:500;white-space:nowrap">${label}</div></div>`;
+const expOff=empty;
+const expB=`<div ${expOff?'':`onclick="${Z('doExp()')}"`} class="${expOff?'':'pr'}" style="flex:1;min-width:110px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 16px;box-sizing:border-box;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;${expOff?`border:1px solid ${c.tx};color:${c.tx};opacity:.38`:`background:${c.pri};color:${c.on}`}">${expOff?ic('ic_block'):ic('ic_export')}<span>${t.exp}</span></div>`;
+const bottom=`<div style="background:${c.bar};border-top:1px solid ${c.bd};flex:none">${pageTools}<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 4px;padding:4px 16px 16px 8px;border-top:1px solid ${c.bd};position:relative">${addT('ic_scan_new',t.cam,'addCam()')}${addT('ic_add_photo',t.photo,'addPhoto()')}${addT('ic_add_pdf',t.pdf,'addPdf()')}<div style="flex:1;min-width:8px"></div>${expB}${zm?`<div onclick="zclose()" style="position:absolute;inset:-1px 0 0;background:rgba(0,0,0,.32);z-index:4"></div>`:''}</div></div>`;
+const dlg=P.dlg?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:20;display:flex;align-items:center;justify-content:center;padding:24px" onclick="if(event.target===this)dlgEnd()"><div style="background:${c.dlg};border-radius:28px;padding:24px 24px 16px;width:100%;max-width:312px;box-sizing:border-box;max-height:100%;overflow:auto"><div style="font-size:24px;line-height:32px;color:${c.tx};margin-bottom:16px">${t.dT}</div><div style="font-size:14px;line-height:20px;color:${c.t2};margin-bottom:24px">${t.dB(n)}</div><div style="display:flex;flex-direction:column;align-items:flex-start;gap:0;margin-inline-start:-12px">${db(t.ds,"dlgEnd('del')",c.err)}${db(t.ef,"dlgEnd('exp')")}${db(t.cancel,'dlgEnd()')}</div></div></div>`:'';
+const pd=P.pdf?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:20;display:flex;align-items:center;justify-content:center;padding:24px"><div style="background:${c.dlg};border-radius:28px;padding:24px 24px 16px;width:100%;max-width:312px;box-sizing:border-box"><div style="font-size:16px;line-height:24px;color:${c.tx};margin-bottom:16px">${t.padd(P.pdf.x,P.pdf.t||'…')}</div><div style="height:4px;border-radius:2px;background:${c.sec};overflow:hidden"><div style="height:100%;width:${P.pdf.t?P.pdf.x/P.pdf.t*100:0}%;background:${c.pri};transition:width 300ms"></div></div><div style="display:flex;justify-content:flex-end;margin-top:16px;margin-inline-end:-12px">${db(t.cancel,'P.pdf=null;draw()')}</div></div></div>`:'';
+document.getElementById('ph').innerHTML=`<div dir="${ar?'rtl':'ltr'}" style="width:${W}px;height:${H}px;overflow:hidden;position:relative;font-family:${font},system-ui;background:${c.bg};display:flex;flex-direction:column">
+${top}
+<div style="flex:1;position:relative;min-height:0;display:flex;flex-direction:column">${dbar}${sa}<div id="area" style="flex:1;position:relative;min-height:0">${grid}</div>${zv}${sn?`<div style="position:absolute;bottom:12px;inset-inline:16px;z-index:6">${sn}</div>`:''}</div>
+${bottom}${dlg}${pd}</div>`;
+const g=document.getElementById('grid');if(g)g.scrollTop=keepScroll;
+if(zm){const A=document.getElementById('area').parentElement.getBoundingClientRect(),r=ratio(PG()[P.zoom]),zw=Math.min(A.width-96,(A.height*.68)/r);const z=document.getElementById('zp');z.style.setProperty('--zw',zw+'px');let sx=null;z.onpointerdown=e=>{sx=e.clientX;z.setPointerCapture(e.pointerId);};z.onpointerup=e=>{if(sx!=null&&Math.abs(e.clientX-sx)>40)swipe(e.clientX-sx);sx=null;};}
+if(P.snack!==snK){clearTimeout(snT);snK=P.snack;if(P.snack)snT=setTimeout(()=>{P.snack=null;snK=null;draw();},P.snack.d||4000);}}
+</script></body></html>

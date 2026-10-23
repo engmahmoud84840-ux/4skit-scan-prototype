@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.ib{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;flex:none}
+.pr{cursor:pointer;position:relative;user-select:none;-webkit-user-select:none}
+.pr:active:after{content:'';position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:.1}
+.strip{display:flex;overflow-x:auto;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.sc{scrollbar-width:thin}
+svg.i{width:24px;height:24px;display:block;flex:none}
+input.nm{all:unset;flex:1;min-width:0;font:inherit;unicode-bidi:plaintext}
+input.nm::placeholder{color:var(--ph2);opacity:1}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style></head><body><div id="ph"></div>
+<script src="icons.js"></script><script src="common.js"></script>
+<script>
+const SCREEN='export';
+const p2=x=>String(x).padStart(2,'0');
+const mkName=()=>{const D=new Date();return `4SKIT_Scan_${D.getFullYear()}-${p2(D.getMonth()+1)}-${p2(D.getDate())}_${p2(D.getHours())}${p2(D.getMinutes())}`;};
+let autoName=mkName();
+const LOC=['Documents / 4SKIT Scan','Download / Scans'];
+const T={ar:{title:'تصدير',back:{pages:'العودة إلى الصفحات',quick:'العودة إلى الكاميرا'},selL:(k,n)=>`تصدير ${k} من ${n} صفحة`,all:'تحديد الكل',hName:'اسم الملف',hFmt:'الصيغة',hQ:'الجودة',hLoc:'مكان الحفظ',
+fmt:{pdf:['PDF','ملف واحد بالصفحات المحددة'],img:['صور','صورة JPG لكل صفحة']},q:{hi:['عالية','أفضل جودة، حجم أكبر'],std:['قياسية','جودة جيدة، حجم أصغر'],lo:['منخفضة','أصغر حجم، جودة أساسية']},
+size:(f,k,x)=>`الحجم التقريبي لـ${k} ${f=='pdf'?'صفحة':'صورة'}: حوالي ${x}`,mb:'ميجابايت',kb:'كيلوبايت',save:'حفظ',share:'مشاركة',prog:(k,n)=>`جارٍ التصدير… ${k} من ${n}`,cancel:'إلغاء',saved:l=>`تم الحفظ في ${l}`,
+brk:n=>`تعذّر عرض الصفحة ${n}. ألغِ تحديدها أو أعد تصويرها.`,bad:'هذا الحرف غير مسموح في اسم الملف.',shareSheet:'قائمة المشاركة في أندرويد (من النظام)',backShare:'رجوع'},
+en:{title:'Export',back:{pages:'Back to pages',quick:'Back to camera'},selL:(k,n)=>`Export ${k} of ${n} pages`,all:'Select all',hName:'File name',hFmt:'Format',hQ:'Quality',hLoc:'Save location',
+fmt:{pdf:['PDF','One file with the selected pages'],img:['Images','One JPG image per page']},q:{hi:['High','Best quality, larger size'],std:['Standard','Good quality, smaller size'],lo:['Low','Smallest size, basic quality']},
+size:(f,k,x)=>`Estimated size for ${k} ${f=='pdf'?'pages':'images'}: about ${x}`,mb:'MB',kb:'KB',save:'Save',share:'Share',prog:(k,n)=>`Exporting… ${k} of ${n}`,cancel:'Cancel',saved:l=>`Saved to ${l}`,
+brk:n=>`Couldn't show page ${n}. Deselect it or retake it.`,bad:"This character isn't allowed in file names.",shareSheet:'Android share sheet (system)',backShare:'Back'}};
+const MB={pdf:{hi:1.6,std:.6,lo:.25},img:{hi:1.8,std:.7,lo:.3}};
+const BAD=/[\/\\:*?"<>|]/g;
+let P={sid:0},snT=null,snK=null,errT=null;
+// الصيغة والجودة والاسم المعدَّل تبقى حتى إنهاء الجلسة، والاسم التلقائي يتجدّد بوقت كل فتح (D-428)
+function onShow(a){if(P.sid!=APP.sid)P={sid:APP.sid,fmt:'pdf',q:'std',name:null,loc:0};autoName=mkName();clearTimeout(P.tm);clearInterval(P.iv);
+Object.assign(P,{from:a.from||'pages',err:null,exp:null,block:false,snack:null,over:null});draw();}
+function onBack(){if(P.over=='share')return toSucc();if(P.exp)return cancelExp();if(P.block)return;xTap();}
+function xTap(){go(P.from=='quick'?'camera':'pages');}
+function cb(state,c){const on=state!='off';return `<span style="width:18px;height:18px;flex:none;box-sizing:border-box;border-radius:2px;display:flex;align-items:center;justify-content:center;${on?`background:${c.pri};`:`border:2px solid ${c.t2};`}">${state=='on'?`<svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="${c.on}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`:state=='mix'?`<span style="width:10px;height:2px;background:${c.on};border-radius:1px"></span>`:''}</span>`;}
+const PG=()=>APP.pages,SEL=()=>APP.sel,K=()=>PG().filter(p=>SEL().has(p.id)).length,N=()=>PG().length,nm=()=>P.name==null?autoName:P.name;
+function selState(){const k=K();return !k?'off':k==N()?'on':'mix';}
+function tap(id){if(SEL().has(id))SEL().delete(id);else SEL().add(id);draw();}
+function selAll(){if(selState()=='on')SEL().clear();else PG().forEach(p=>SEL().add(p.id));draw();}
+function setF(f){P.fmt=f;draw();}
+function setQ(q){P.q=q;draw();}
+function sizeTxt(){const t=T[S.lang],mb=MB[P.fmt][P.q]*K();const x=mb>=1?`${mb.toFixed(1)} ${t.mb}`:`${Math.round(mb*1024)} ${t.kb}`;return t.size(P.fmt,K(),x);}
+function locTap(){P.loc=1-P.loc;draw();}
+function showErr(e){P.err=e;clearTimeout(errT);if(e=='bad')errT=setTimeout(()=>{if(P.err=='bad'){P.err=null;draw(true);}},4000);draw(true);}
+function onBefore(ev){if(ev.data&&BAD.test(ev.data)){BAD.lastIndex=0;ev.preventDefault();const r=ev.data.replace(BAD,'');if(r){const el=ev.target;el.setRangeText(r,el.selectionStart,el.selectionEnd,'end');P.name=el.value;}showErr('bad');}BAD.lastIndex=0;}
+function onInput(el){const v=el.value.replace(BAD,'').replace(/^\s+/,'').slice(0,100);if(v!==el.value)el.value=v;P.name=v;const was=P.err;P.err=null;if(was!==P.err)draw(true);}
+const brokenSel=()=>PG().filter(p=>p.broken&&SEL().has(p.id));
+const off=()=>!K();
+// لا يُحفظ ملف حقيقي: "حفظ" يفتح شاشة النجاح بعد مؤشر التصدير (D-784)
+function goExp(kind){if(off()||P.block||P.exp)return;const b=brokenSel();if(b.length){P.snack=T[S.lang].brk(b.map(p=>PG().indexOf(p)+1).join('، '));return draw();}
+P.block=true;P.kind=kind;P.snack=null;const n=K();draw();P.tm=setTimeout(()=>{P.exp={k:0,n};P.block=false;draw();P.iv=setInterval(()=>{P.exp.k++;if(P.exp.k>=n){clearInterval(P.iv);P.exp=null;
+const name=(nm().trim()||autoName);APP.lastExport={fmt:P.fmt,k:n,name,loc:LOC[P.loc]};if(P.kind=='share'){P.snack=T[S.lang].saved(LOC[P.loc]);P.over='share';}else return go('success');}draw();},450);},1000);}
+function toSucc(){P.over=null;P.snack=null;go('success');}
+function cancelExp(){clearInterval(P.iv);P.exp=null;draw();}
+function draw(keepFocus){if(!P.fmt)return;const t=T[S.lang],fz=1,W=VW(),H=VH(),ar=S.lang=='ar',c=C();
+const ae=document.activeElement,hadFocus=ae&&ae.id=='nm',cp=hadFocus?ae.selectionStart:0;
+const sc0=document.getElementById('sc'),keep=sc0?sc0.scrollTop:0,rk={};document.querySelectorAll('[data-row]').forEach(r=>rk[r.dataset.row]=r.scrollLeft);
+const font=ar?"'IBM Plex Sans Arabic'":"Inter",k=K(),n=N();
+const xBtn=`<div onclick="xTap()" class="ib pr" style="color:${c.tx}" aria-label="${t.back[P.from]}">${ic('ic_close')}</div>`;
+const ttl=`<div style="font-weight:600;font-size:20px;line-height:28px;white-space:nowrap;color:${c.tx}">${t.title}</div>`;
+const top=`<div style="min-height:64px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 4px;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none"><div style="justify-self:start">${xBtn}</div>${ttl}<div></div></div>`;
+const selLine=`<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0 8px;padding:4px 16px 0 16px;min-height:48px"><div style="font-size:14px;line-height:20px;font-weight:600;color:${c.tx}">${t.selL(k,n)}</div><div onclick="selAll()" class="pr" style="display:flex;align-items:center;gap:12px;min-height:48px;padding:0 8px;margin-inline-end:-8px;border-radius:12px;color:${c.tx};font-size:14px;line-height:20px;font-weight:500">${cb(selState(),c)}<span>${t.all}</span></div></div>`;
+const tw=80;
+const thumbPage=p=>`<div style="position:absolute;inset:0;background:${c.ph};overflow:hidden"><img src="${p.img}" style="display:block;width:100%" draggable="false"></div>`;
+const card=(p,i)=>{const on=SEL().has(p.id);const th=p.broken?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:${c.ph};color:${c.t2}">${ic('ic_broken_image',32)}</div>`
+:!p.ld||!p.img?`<div style="position:absolute;inset:0;background:${c.ph};display:flex;align-items:center;justify-content:center"><div style="width:20px;height:20px;border-radius:50%;border:2.5px solid ${c.bd};border-top-color:${c.pri};animation:sp 1s linear infinite"></div></div>`
+:thumbPage(p);
+return `<div onclick="tap(${p.id})" class="pr" style="flex:none;width:${tw}px;border-radius:12px;background:${c.bar};box-sizing:border-box;border:${on?`2px solid ${c.pri}`:`1px solid ${c.bd}`};padding:${on?0:1}px;padding-top:${on?6:7}px">
+<div style="position:relative;aspect-ratio:.8;margin:0 6px;outline:1px solid ${c.bd};outline-offset:0"><div style="position:absolute;inset:0;overflow:hidden">${th}</div></div>
+<div style="display:flex;align-items:center;gap:6px;height:36px;padding-inline:8px">${cb(on?'on':'off',c)}<span style="flex:1;font:500 12px/16px Inter,system-ui;color:${c.tx};text-align:center">${i+1}</span></div></div>`;};
+const strip=`<div class="strip" style="gap:8px;padding:4px 16px 12px">${PG().map(card).join('')}</div>`;
+const head=h=>`<div style="font-size:14px;line-height:20px;font-weight:600;color:${c.t2};margin:16px 0 8px">${h}</div>`;
+const opt=(on,lab,fn)=>`<div ${on?'data-on="1"':''} onclick="${fn}" class="${on?'':'pr'}" style="min-height:48px;padding:${on?7:8}px ${on?11:12}px;box-sizing:border-box;border-radius:8px;background:${on?c.sec:c.bar};${on?`border:2px solid ${c.pri};`:`border:1px solid ${c.bd};`}cursor:pointer"><div style="display:flex;align-items:center;gap:4px;font-size:14px;line-height:20px;font-weight:500;color:${on?c.pri:c.tx}">${on?`<span style="width:18px;height:18px;display:flex">${ic('ic_check',18)}</span>`:''}${lab[0]}</div><div style="font-size:12px;line-height:16px;color:${c.t2};margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${lab[1]}</div></div>`;
+const g=cols=>`display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:8px`;
+const fmt=`${head(t.hFmt)}<div data-row="fmt" style="${g(2)}">${['pdf','img'].map(f=>opt(P.fmt==f,t.fmt[f],`setF('${f}')`)).join('')}</div>`;
+const qual=`${head(t.hQ)}<div data-row="q" style="${g(3)}">${['hi','std','lo'].map(q=>opt(P.q==q,t.q[q],`setQ('${q}')`)).join('')}</div>${k?`<div style="font-size:12px;line-height:16px;color:${c.t2};margin-top:8px">${sizeTxt()}</div>`:''}`;
+const er=P.err,val=P.name==null?autoName:P.name;
+const field=`${head(t.hName)}<div style="--ph2:${c.t2};display:flex;align-items:center;gap:8px;min-height:56px;padding:0 ${er?11:12}px 0 ${er?15:16}px;box-sizing:border-box;border-radius:8px;background:${c.bar};border:${er?`2px solid ${c.err}`:`1px solid ${c.t2}`};font-size:16px;line-height:24px;color:${c.tx}" id="fb"><input id="nm" class="nm" dir="auto" maxlength="100" placeholder="${autoName}" value="${val.replace(/"/g,'&quot;')}" aria-label="${t.hName}" onbeforeinput="onBefore(event)" oninput="onInput(this)" onkeydown="if(event.key=='Enter')this.blur()" onfocus="document.getElementById('fb').style.outline='1px solid ${er?c.err:c.pri}'" onblur="const b=document.getElementById('fb');b.style.outline=''">${er?`<span style="color:${c.err};display:flex">${ic('m3_error')}</span>`:''}</div>${er?`<div style="font-size:12px;line-height:16px;color:${c.err};padding:4px 16px 0">${t.bad}</div>`:''}`;
+const loc=`${head(t.hLoc)}<div onclick="locTap()" class="pr" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 12px 8px 16px;padding-inline:16px 12px;box-sizing:border-box;border-radius:8px;background:${c.bar};border:1px solid ${c.bd};color:${c.tx}"><span style="color:${c.t2};display:flex">${ic('ic_folder')}</span><span dir="ltr" style="flex:1;font-size:16px;line-height:24px;text-align:start;unicode-bidi:plaintext">${LOC[P.loc]}</span><span style="color:${c.t2};display:flex;${ar?'transform:scaleX(-1)':''}">${ic('ic_chevron_forward')}</span></div>`;
+const body=`<div id="sc" class="sc" style="flex:1;overflow-y:auto;padding:0 16px 24px;min-height:0">${fmt}${qual}${field}${loc}</div>`;
+const isOff=off(),soft=brokenSel().length>0;
+const btn=(kind,icn,label,pri)=>{const dis=isOff||soft;return `<div ${isOff?'':`onclick="goExp('${kind}')"`} class="${isOff?'':'pr'}" style="flex:1;min-width:120px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 16px;box-sizing:border-box;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;${dis?`border:1px solid ${c.tx};color:${c.tx};opacity:.38`:pri?`background:${c.pri};color:${c.on}`:`background:${c.sec};color:${c.pri}`}">${dis?ic('ic_block'):ic(icn)}<span>${label}</span></div>`;};
+const bottom=`<div style="background:${c.bar};border-top:1px solid ${c.bd};flex:none;display:flex;flex-wrap:wrap;gap:8px 12px;padding:12px 16px 16px">${btn('share','ic_share',t.share,0)}${btn('save','ic_export',t.save,1)}</div>`;
+const db=(label,fn,col)=>`<div onclick="${fn}" class="pr" style="min-height:48px;display:flex;align-items:center;padding:4px 12px;box-sizing:border-box;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;color:${col||c.pri};text-align:start">${label}</div>`;
+const scrim=x=>`<div style="position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:20;display:flex;align-items:center;justify-content:center;padding:24px" ${x||''}>`;
+const box=`background:${c.dlg};border-radius:28px;padding:24px 24px 16px;width:100%;max-width:312px;box-sizing:border-box;max-height:100%;overflow:auto`;
+const prog=P.exp?`${scrim()}<div style="${box}"><div style="font-size:16px;line-height:24px;color:${c.tx};margin-bottom:16px">${t.prog(P.exp.k,P.exp.n)}</div><div style="height:4px;border-radius:2px;background:${c.sec};overflow:hidden"><div style="height:100%;width:${P.exp.k/P.exp.n*100}%;background:${c.pri};border-radius:2px;transition:width 300ms"></div></div><div style="display:flex;justify-content:flex-end;margin-top:16px;margin-inline-end:-12px">${db(t.cancel,'cancelExp()')}</div></div></div>`:'';
+const sn=P.snack?`<div style="position:absolute;bottom:12px;inset-inline:16px;z-index:6;background:${c.sb};border-radius:8px;min-height:48px;display:flex;align-items:center;padding-inline:16px"><span style="font-size:14px;line-height:20px;color:${c.st};padding:14px 0">${P.snack}</span></div>`:'';
+const over=P.over=='share'?`<div style="position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:12px;color:#fff;font-size:14px"><div style="background:${c.dlg};color:${c.tx};width:100%;border-radius:28px 28px 0 0;padding:32px 16px;text-align:center">${t.shareSheet}</div><div onclick="toSucc()" class="pr" style="position:absolute;top:16px;background:#fff;color:#111;border-radius:12px;padding:8px 16px;font-weight:500">${t.backShare}</div></div>`:'';
+const blk=P.block?`<div style="position:absolute;inset:0;z-index:19"></div>`:'';
+document.getElementById('ph').innerHTML=`<div dir="${ar?'rtl':'ltr'}" style="width:${W}px;height:${H}px;overflow:hidden;position:relative;font-family:${font},system-ui;background:${c.bg};display:flex;flex-direction:column">
+${top}
+<div style="flex:none;background:${c.bg}">${selLine}${strip}</div>
+<div style="flex:1;position:relative;min-height:0;display:flex;flex-direction:column;border-top:1px solid ${c.bd}">${body}${sn}</div>
+${bottom}${prog}${blk}${over}</div>`;
+const s=document.getElementById('sc');if(s)s.scrollTop=keep;
+document.querySelectorAll('[data-row]').forEach(r=>{if(rk[r.dataset.row]!=null)r.scrollLeft=rk[r.dataset.row];});
+if(keepFocus&&hadFocus){const e=document.getElementById('nm');e.focus();e.setSelectionRange(cp,cp);}
+if(P.snack!==snK){clearTimeout(snT);snK=P.snack;if(P.snack&&!P.over)snT=setTimeout(()=>{P.snack=null;snK=null;draw();},4000);}}
+</script></body></html>

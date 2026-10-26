@@ -117,6 +117,6 @@ ${top}
 <div style="flex:1;position:relative;min-height:0;display:flex;flex-direction:column">${dbar}${sa}<div id="area" style="flex:1;position:relative;min-height:0">${grid}</div>${zv}${sn?`<div style="position:absolute;bottom:12px;inset-inline:16px;z-index:6">${sn}</div>`:''}</div>
 ${bottom}${dlg}${pd}</div>`;
 const g=document.getElementById('grid');if(g)g.scrollTop=keepScroll;
-if(zm){const A=document.getElementById('area').parentElement.getBoundingClientRect(),r=ratio(PG()[P.zoom]),zw=Math.min(A.width-96,(A.height*.68)/r);const z=document.getElementById('zp');z.style.setProperty('--zw',zw+'px');let sx=null;z.onpointerdown=e=>{sx=e.clientX;z.setPointerCapture(e.pointerId);};z.onpointerup=e=>{if(sx!=null&&Math.abs(e.clientX-sx)>40)swipe(e.clientX-sx);sx=null;};}
+if(zm){const A=document.getElementById('area').parentElement.getBoundingClientRect(),r=ratio(PG()[P.zoom]),zw=Math.min(A.width-96,(A.height-96)/r);const z=document.getElementById('zp');z.style.setProperty('--zw',zw+'px');let sx=null;z.onpointerdown=e=>{sx=e.clientX;z.setPointerCapture(e.pointerId);};z.onpointerup=e=>{if(sx!=null&&Math.abs(e.clientX-sx)>40)swipe(e.clientX-sx);sx=null;};}
 if(P.snack!==snK){clearTimeout(snT);snK=P.snack;if(P.snack)snT=setTimeout(()=>{P.snack=null;snK=null;draw();},P.snack.d||4000);}}
 </script></body></html>

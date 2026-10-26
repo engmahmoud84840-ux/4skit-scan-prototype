@@ -22,11 +22,11 @@ const p2=x=>String(x).padStart(2,'0');
 const mkName=()=>{const D=new Date();return `4SKIT_Scan_${D.getFullYear()}-${p2(D.getMonth()+1)}-${p2(D.getDate())}_${p2(D.getHours())}${p2(D.getMinutes())}`;};
 let autoName=mkName();
 const LOC=['Documents / 4SKIT Scan','Download / Scans'];
-const T={ar:{title:'تصدير',back:{pages:'العودة إلى الصفحات',quick:'العودة إلى الكاميرا'},selL:(k,n)=>`تصدير ${k} من ${n} صفحة`,all:'تحديد الكل',hName:'اسم الملف',clr:'مسح الاسم',hFmt:'الصيغة',hQ:'الجودة',hLoc:'مكان الحفظ',
+const T={ar:{title:'حفظ ومشاركة',back:{pages:'العودة إلى الصفحات',quick:'العودة إلى الكاميرا'},selL:(k,n)=>`${k} من ${n} صفحة محددة`,all:'تحديد الكل',hName:'اسم الملف',clr:'مسح الاسم',hFmt:'الصيغة',hQ:'الجودة',hLoc:'مكان الحفظ',
 fmt:{pdf:['PDF','ملف واحد بالصفحات المحددة'],img:['صور','صورة JPG لكل صفحة']},q:{hi:['عالية','أفضل جودة، حجم أكبر'],std:['قياسية','جودة جيدة، حجم أصغر'],lo:['منخفضة','أصغر حجم، جودة أساسية']},
 size:(f,k,x)=>`الحجم التقريبي لـ${k} ${f=='pdf'?'صفحة':'صورة'}: حوالي ${x}`,mb:'ميجابايت',kb:'كيلوبايت',save:'حفظ',share:'مشاركة',prog:(k,n)=>`جارٍ التصدير… ${k} من ${n}`,cancel:'إلغاء',saved:l=>`تم الحفظ في ${l}`,
 brk:n=>`تعذّر عرض الصفحة ${n}. ألغِ تحديدها أو أعد تصويرها.`,bad:'هذا الحرف غير مسموح في اسم الملف.',shareSheet:'قائمة المشاركة في أندرويد (من النظام)',backShare:'رجوع'},
-en:{title:'Export',back:{pages:'Back to pages',quick:'Back to camera'},selL:(k,n)=>`Export ${k} of ${n} pages`,all:'Select all',hName:'File name',clr:'Clear name',hFmt:'Format',hQ:'Quality',hLoc:'Save location',
+en:{title:'Save & share',back:{pages:'Back to pages',quick:'Back to camera'},selL:(k,n)=>`${k} of ${n} pages selected`,all:'Select all',hName:'File name',clr:'Clear name',hFmt:'Format',hQ:'Quality',hLoc:'Save location',
 fmt:{pdf:['PDF','One file with the selected pages'],img:['Images','One JPG image per page']},q:{hi:['High','Best quality, larger size'],std:['Standard','Good quality, smaller size'],lo:['Low','Smallest size, basic quality']},
 size:(f,k,x)=>`Estimated size for ${k} ${f=='pdf'?'pages':'images'}: about ${x}`,mb:'MB',kb:'KB',save:'Save',share:'Share',prog:(k,n)=>`Exporting… ${k} of ${n}`,cancel:'Cancel',saved:l=>`Saved to ${l}`,
 brk:n=>`Couldn't show page ${n}. Deselect it or retake it.`,bad:"This character isn't allowed in file names.",shareSheet:'Android share sheet (system)',backShare:'Back'}};

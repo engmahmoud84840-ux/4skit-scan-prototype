@@ -14,9 +14,9 @@ input.br{flex:1;min-width:0;accent-color:var(--pri)}
 <script src="icons.js?v=2"></script><script src="common.js?v=2"></script>
 <script>
 const SCREEN='processing';
-const T={ar:{page:'صفحة',exp:'تصدير',crop:'قص',rot:'تدوير',br:'السطوع',ra:'استعادة التلقائي',rt:'إعادة التصوير',done:'تم',cancel:'إلغاء',next:'التالي',sas:'حفظ وتصوير صفحة جديدة',save:'حفظ',full:'الصورة كاملة',det:'اكتشاف تلقائي',f:{auto:'تلقائي',color:'ألوان',gray:'رمادي',bw:'أبيض وأسود',orig:'الأصلي'},
+const T={ar:{page:'صفحة',exp:'حفظ ومشاركة',crop:'قص',rot:'تدوير',br:'السطوع',ra:'استعادة التلقائي',rt:'إعادة التصوير',done:'تم',cancel:'إلغاء',next:'التالي',sas:'حفظ وتصوير صفحة جديدة',save:'حفظ',full:'الصورة كاملة',det:'اكتشاف تلقائي',f:{auto:'تلقائي',color:'ألوان',gray:'رمادي',bw:'أبيض وأسود',orig:'الأصلي'},
 ra2:'تمت استعادة التلقائي',undo:'تراجع',lm:'هذه آخر صفحة في الجلسة (الحد الأقصى 100 صفحة).',aX:'إلغاء'},
-en:{page:'Page',exp:'Export',crop:'Crop',rot:'Rotate',br:'Brightness',ra:'Reset to auto',rt:'Retake',done:'Done',cancel:'Cancel',next:'Next',sas:'Save and scan another',save:'Save',full:'Full image',det:'Auto detect',f:{auto:'Auto',color:'Color',gray:'Grayscale',bw:'Black & white',orig:'Original'},
+en:{page:'Page',exp:'Save & share',crop:'Crop',rot:'Rotate',br:'Brightness',ra:'Reset to auto',rt:'Retake',done:'Done',cancel:'Cancel',next:'Next',sas:'Save and scan another',save:'Save',full:'Full image',det:'Auto detect',f:{auto:'Auto',color:'Color',gray:'Grayscale',bw:'Black & white',orig:'Original'},
 ra2:'Reset to auto',undo:'Undo',lm:'This is the last page in this session (limit: 100 pages).',aX:'Cancel'}};
 let P={},snT=null,snK=null,busy=false;
 const cp=a=>a.map(p=>p.slice());
@@ -77,10 +77,13 @@ if(P.lim&&!dis&&!edit)acts[0]=acts[0].replace('<div ','<div onclick="sas()" ');
 const mk=k=>P.snack=='undo'?snack(t.ra2,t.undo,c,'undo()',k):P.snack=='limit'?snack(t.lm,'',c):'',sn=mk(0);
 const xoff=lock;
 document.getElementById('ph').innerHTML=`<div dir="${ar?'rtl':'ltr'}" style="width:${W}px;height:${H}px;overflow:hidden;position:relative;font-family:${font},system-ui;background:${c.bg};display:flex;flex-direction:column">
-<div style="min-height:64px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 4px;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none;color:${c.tx}">
-<div onclick="xTap()" aria-label="${t.aX}" style="justify-self:start;${xoff?'opacity:.38':''}" class="ib ${xoff?'':'pr'}">${xoff?ic('ic_block'):ic('ic_close')}</div>
-<div style="font-weight:600;font-size:20px;line-height:28px;white-space:nowrap">${t.page} ${P.N}</div>
-<div style="justify-self:end;padding:0 4px">${edit?'':`<div ${dis?'':'onclick="qexp()"'} class="${dis?'':'pr'}" style="display:flex;align-items:center;gap:6px;min-height:40px;padding:0 12px 0 10px;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;${dis?`border:1px solid ${c.tx};opacity:.38;color:${c.tx}`:`background:${c.sec};color:${c.pri}`}">${dis?ic('ic_block'):ic('ic_export')}${t.exp}</div>`}</div></div>
+${(()=>{const mc=document.createElement('canvas').getContext('2d'),mw=(x,w,px)=>{mc.font=`${w} ${px}px ${font}`;return mc.measureText(x).width};
+const xB=`<div onclick="xTap()" aria-label="${t.aX}" style="${xoff?'opacity:.38':''}" class="ib ${xoff?'':'pr'}">${xoff?ic('ic_block'):ic('ic_close')}</div>`;
+const tB=`<div style="font-weight:600;font-size:20px;line-height:28px;white-space:nowrap">${t.page} ${P.N}</div>`;
+const eB=edit?'':`<div ${dis?'':'onclick="qexp()"'} class="${dis?'':'pr'}" style="display:flex;align-items:center;gap:6px;min-height:40px;padding:0 12px 0 10px;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;flex:none;${dis?`border:1px solid ${c.tx};opacity:.38;color:${c.tx}`:`background:${c.sec};color:${c.pri}`}">${dis?ic('ic_block'):ic('ic_export')}${t.exp}</div>`;
+const side=Math.max(48,edit?0:mw(t.exp,500,14)+20+6+22),fit=mw(`${t.page} ${P.N}`,600,20)+2*side+8<=W;
+return fit?`<div style="min-height:64px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 4px;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none;color:${c.tx}"><div style="justify-self:start">${xB}</div>${tB}<div style="justify-self:end">${eB}</div></div>`
+:`<div style="background:${c.bar};border-bottom:1px solid ${c.bd};flex:none;padding:0 4px 8px;color:${c.tx}"><div style="display:flex;justify-content:space-between;align-items:center;min-height:64px">${xB}${eB}</div><div style="padding:0 12px;display:flex;justify-content:center">${tB}</div></div>`;})()}
 <div id="area" style="flex:1;position:relative;overflow:hidden;min-height:0">${sn?`<div id="snw" style="position:absolute;bottom:12px;inset-inline:16px;z-index:5">${sn}</div>`:''}</div>
 <div style="background:${c.bar};border-top:1px solid ${c.bd};flex:none">
 <div class="chips">${fl}</div>

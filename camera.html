@@ -15,20 +15,19 @@ svg.i{width:24px;height:24px;display:block}
 <div id="root" style="position:fixed;inset:0;background:#000;overflow:hidden">
 <div id="pv" style="position:absolute;left:0;right:0;overflow:hidden;background:#1F2937"><video id="v" autoplay playsinline muted></video></div>
 <div id="ui"></div></div>
-<script src="icons.js?v=2"></script><script src="common.js?v=2"></script>
+<script src="icons.js?v=3"></script><script src="common.js?v=3"></script>
 <script>
 const SCREEN='camera';
-const block=`<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="8.25"/><path d="M6.2 17.8 17.8 6.2"/></svg>`;
 const T={ar:{auto:'تلقائي',on:'تشغيل',off:'إيقاف',torch:'مصباح',pt:'يحتاج التطبيق إلى الكاميرا لتصوير المستندات',pl:'تُحفظ صورك على هاتفك فقط.',pb:'السماح بالكاميرا',dt:'إذن الكاميرا غير مفعّل',dl:'يمكنك تفعيله من إعدادات التطبيق.',db:'فتح الإعدادات',ft:'الكاميرا غير متاحة حاليًا',fl:'ربما يستخدمها تطبيق آخر. أغلقه ثم أعد المحاولة.',fb:'إعادة المحاولة',
 lm:n=>`وصلت الجلسة إلى الحد الأقصى (${n} صفحة)`,lb:'عرض الصفحات',um:'تمت إزالة الصورة',ub:'تراجع',dm:'تم حذف الجلسة',cf:'تعذّر التقاط الصورة. حاول مرة أخرى.',bi:'تعذّر فتح الصورة. ربما تكون تالفة.',pp:'الملف محمي بكلمة مرور ولا يمكن فتحه.',pd:'تعذّر فتح الملف. ربما يكون تالفًا.',
 pl2:(x,r)=>`لا يمكن إضافة ${x} صفحة. يتبقى في الجلسة مكان لـ${r} صفحة فقط.`,padd:(x,t)=>`جارٍ إضافة الصفحات… ${x} من ${t}`,cancel:'إلغاء',rt:n=>`إعادة تصوير الصفحة ${n}`,
 xT:'الخروج وحذف الجلسة؟',xB:n=>`سيتم حذف ${arN(n)} نهائيًا. صدّرها أولًا إن كنت تحتاجها.`,xV:'عرض الصفحات',xD:'خروج وحذف',
-aX:'خروج',aXr:'إلغاء إعادة التصوير',aS:'الإعدادات',aC:'التقاط صورة',aG:'إضافة صورة من الهاتف',aP:'إضافة ملف PDF',aPg:n=>`الصفحات: ${n}`,lG:'صورة',lP:'PDF',lPg:'الصفحات',aF:m=>`الفلاش: ${m}`},
+aX:'خروج',aXr:'إلغاء إعادة التصوير',aS:'الإعدادات',aC:'التقاط صورة',ca:'الكاميرا غير متاحة الآن.',aG:'إضافة صورة من الهاتف',aP:'إضافة ملف PDF',aPg:n=>`الصفحات: ${n}`,lG:'صورة',lP:'PDF',lPg:'الصفحات',aF:m=>`الفلاش: ${m}`},
 en:{auto:'Auto',on:'On',off:'Off',torch:'Torch',pt:'Camera access is needed to scan documents',pl:'Your photos stay on your phone.',pb:'Allow camera',dt:'Camera access is turned off',dl:'You can turn it on in app settings.',db:'Open settings',ft:'Camera unavailable',fl:'Another app may be using it. Close it, then try again.',fb:'Try again',
 lm:n=>`Session limit reached (${n} pages)`,lb:'View pages',um:'Photo removed',ub:'Undo',dm:'Session deleted',cf:"Couldn't take the photo. Try again.",bi:"Couldn't open this image. It may be damaged.",pp:"This file is password-protected and can't be opened.",pd:"Couldn't open this file. It may be damaged.",
 pl2:(x,r)=>`Can't add ${x} pages. Only ${r} more pages fit in this session.`,padd:(x,t)=>`Adding pages… ${x} of ${t}`,cancel:'Cancel',rt:n=>`Retaking page ${n}`,
 xT:'Exit and delete session?',xB:n=>`${n} ${n==1?'page':'pages'} will be permanently deleted. Export them first if you need them.`,xV:'View pages',xD:'Exit and delete',
-aX:'Exit',aXr:'Cancel retake',aS:'Settings',aC:'Take photo',aG:'Add photo from phone',aP:'Add PDF file',aPg:n=>`Pages: ${n}`,lG:'Photo',lP:'PDF',lPg:'Pages',aF:m=>`Flash: ${m}`}};
+aX:'Exit',aXr:'Cancel retake',aS:'Settings',aC:'Take photo',ca:"The camera isn't available right now.",aG:'Add photo from phone',aP:'Add PDF file',aPg:n=>`Pages: ${n}`,lG:'Photo',lP:'PDF',lPg:'Pages',aF:m=>`Flash: ${m}`}};
 // st: open (تفتح) / normal / perm (أ) / denied (ب) / fail
 let P={st:'open',bar:false,mode:'main',rt:null,snack:null,dlg:false,busy:false,pdf:null},stream=null,snT=null;
 const v=document.getElementById('v');
@@ -49,7 +48,7 @@ function click(){if(!APP.sound)return;try{AC=AC||new (window.AudioContext||windo
 [[0,2600,.5],[.075,1700,.35]].forEach(([dt,f,v])=>{const n=Math.round(AC.sampleRate*.03),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
 const s=AC.createBufferSource(),bp=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;bp.type='bandpass';bp.frequency.value=f;bp.Q.value=1.2;
 g.gain.setValueAtTime(v,t0+dt);g.gain.exponentialRampToValueAtTime(.001,t0+dt+.03);s.connect(bp).connect(g).connect(AC.destination);s.start(t0+dt);});}catch(e){}}
-function shoot(){if(P.busy)return;if(full())return snack('lm');if(P.st=='perm'||P.st=='denied')return startCam(true);if(P.st!='normal')return;
+function shoot(el){if(P.busy)return;if(full())return snack('lm');if(P.st=='perm'||P.st=='denied')return startCam(true);if(P.st!='normal')return tip(el,T[S.lang].ca);
 const vw=v.videoWidth,vh=v.videoHeight;if(!vw)return snack('cf');P.busy=true;P.bar=false;
 const box=document.getElementById('pv').getBoundingClientRect(),k=Math.max(box.width/vw,box.height/vh),cw=box.width/k,ch=box.height/k,sx=(vw-cw)/2,sy=(vh-ch)/2,m=Math.min(1,1600/Math.max(cw,ch));
 const cv=document.createElement('canvas');cv.width=Math.round(cw*m);cv.height=Math.round(ch*m);cv.getContext('2d').drawImage(v,sx,sy,cw,ch,0,0,cv.width,cv.height);
@@ -90,6 +89,6 @@ document.getElementById('ui').innerHTML=`
 ${fl}${view}${snk}
 <div style="position:absolute;bottom:0;left:0;right:0;height:${bh}px;background:${bot<120?'rgba(0,0,0,.7)':'#000'};display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 16px">
 <div style="justify-self:start">${rt?'':`<div onclick="go('pages')" class="pr" aria-label="${t.aPg(n)}" style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="display:flex;align-items:center;gap:6px;min-height:48px;padding:0 12px;border-radius:12px;background:#1F2937;color:#F9FAFB">${last&&last.img&&!last.broken?`<img src="${last.img}" alt="" style="display:block;width:24px;height:32px;object-fit:cover;border-radius:4px;background:#374151">`:ic('ic_pages')}<span style="font:500 14px/20px Inter,system-ui">${n}</span></div>${lbl(t.lPg)}</div>`}</div>
-<div onclick="shoot()" aria-label="${t.aC}" style="cursor:pointer;width:76px;height:76px;border-radius:50%;border:4px solid ${acc};box-sizing:border-box;display:flex;align-items:center;justify-content:center;${op}${P.st=='open'||P.st=='fail'?'opacity:.38;':''}"><div style="width:60px;height:60px;border-radius:50%;background:#F9FAFB;display:flex;align-items:center;justify-content:center;color:#111827;${busy?'transform:scale(.9)':''}">${dis||P.st=='open'||P.st=='fail'?block:busy?`<div style="width:28px;height:28px;border-radius:50%;border:3px solid #D1D5DB;border-top-color:#0F6B6D;animation:sp 1s linear infinite"></div>`:''}</div></div>
-<div style="justify-self:end;display:flex;gap:4px;${op}">${rt?'':`<div onclick="pdf()" aria-label="${t.aP}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:56px"><div class="ib">${dis?block:ic('ic_add_pdf')}</div>${lbl(t.lP)}</div>`}<div onclick="gallery()" aria-label="${t.aG}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:56px"><div class="ib">${dis?block:ic('ic_add_photo')}</div>${lbl(t.lG)}</div></div></div>${dlg}${pd}`;}
+<div onclick="shoot(this)" ${dis||P.st=='open'||P.st=='fail'?dA(t.aC,dis?'':t.ca):`aria-label="${t.aC}"`} style="cursor:pointer;width:76px;height:76px;border-radius:50%;border:4px solid ${acc};box-sizing:border-box;display:flex;align-items:center;justify-content:center;${op}${P.st=='open'||P.st=='fail'?'opacity:.38;':''}"><div style="width:60px;height:60px;border-radius:50%;background:#F9FAFB;display:flex;align-items:center;justify-content:center;color:#111827;${busy?'transform:scale(.9)':''}">${dis||P.st=='open'||P.st=='fail'?'':busy?`<div style="width:28px;height:28px;border-radius:50%;border:3px solid #D1D5DB;border-top-color:#0F6B6D;animation:sp 1s linear infinite"></div>`:''}</div></div>
+<div style="justify-self:end;display:flex;gap:4px;${op}">${rt?'':`<div onclick="pdf()" ${dis?dA(t.aP):`aria-label="${t.aP}"`} style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:56px"><div class="ib">${ic('ic_add_pdf')}</div>${lbl(t.lP)}</div>`}<div onclick="gallery()" ${dis?dA(t.aG):`aria-label="${t.aG}"`} style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:56px"><div class="ib">${ic('ic_add_photo')}</div>${lbl(t.lG)}</div></div></div>${dlg}${pd}`;}
 </script></body></html>

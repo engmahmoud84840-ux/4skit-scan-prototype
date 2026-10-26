@@ -13,3 +13,18 @@ addEventListener('resize',()=>{if(window.draw&&APP.cur==SCREEN&&SCREEN!='export'
 document.addEventListener('pointerdown',()=>APP.arm(),true);
 // أدوات أندرويد لاختيار صورة أو ملف PDF: نافذة اختيار المتصفح
 function pick(accept,cb){const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>{if(i.files[0])cb(i.files[0]);};i.click();}
+// حالة التعطيل (M3): الأيقونة والاسم كما هما بشفافية 38٪. اسم قارئ الشاشة = الاسم + غير متاح + السبب إن وجد.
+// dA(الاسم، السبب، tap): السمات؛ مع tap والسبب تظهر تلميحة عند اللمس.
+const UNAV={ar:'غير متاح',en:'unavailable'};
+const esc=x=>String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function dA(name,why,tap){const sp=S.lang=='ar'?'، ':', ';return `aria-disabled="true" aria-label="${esc(name+sp+UNAV[S.lang]+(why?sp+why:''))}"${why?` data-tip="${esc(why)}"`:''}${why&&tap?' onclick="tip(this)"':''}`;}
+// تلميحة M3 البسيطة (plain tooltip): فوق الزر، وتحته إن لم يتسع المكان؛ واحدة فقط، وتختفي بعد 1.5 ثانية
+let tipEl=null,tipT=null;
+function tip(el,msg){msg=msg||(el&&el.dataset.tip);if(!msg)return;if(tipEl)tipEl.remove();clearTimeout(tipT);
+const c=C(),ar=S.lang=='ar',d=document.createElement('div');d.setAttribute('role','tooltip');d.dir=ar?'rtl':'ltr';d.textContent=msg;
+d.style.cssText=`position:fixed;left:0;top:0;z-index:2147483000;box-sizing:border-box;max-width:200px;min-height:24px;padding:4px 8px;border-radius:4px;background:${c.sb};color:${c.st};font:400 12px/16px ${ar?"'IBM Plex Sans Arabic'":'Inter'},system-ui;text-align:start;pointer-events:none;visibility:hidden`;
+document.body.appendChild(d);tipEl=d;
+const r=el.getBoundingClientRect(),w=d.offsetWidth,h=d.offsetHeight,g=4,m=8;
+let x=Math.min(Math.max(r.left+r.width/2-w/2,m),VW()-w-m),y=r.top-g-h;if(y<m)y=r.bottom+g;
+d.style.left=x+'px';d.style.top=y+'px';d.style.visibility='visible';
+tipT=setTimeout(()=>{d.remove();if(tipEl===d)tipEl=null;},1500);}

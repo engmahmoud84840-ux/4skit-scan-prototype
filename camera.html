@@ -39,7 +39,7 @@ catch(e){P.st=e.name=='NotAllowedError'||e.name=='SecurityError'?(P.st=='perm'||
 function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}v.srcObject=null;}
 function torch(){if(!stream)return;const tr=stream.getVideoTracks()[0];try{tr.applyConstraints({advanced:[{torch:APP.flash=='ic_flash_torch'}]}).catch(()=>{});}catch(e){}}
 function setFlash(m){APP.flash=m;P.bar=false;torch();draw();}
-function snack(k,arg){P.snack={k,arg};clearTimeout(snT);snT=setTimeout(()=>{P.snack=null;draw();},(k=='um'||k=='dm')?10000:4000);draw();}
+function snack(k,arg){P.snack={k,arg};clearTimeout(snT);snT=setTimeout(()=>{P.snack=null;draw();},(k=='um'||k=='dm')?6000:4000);draw();}
 function snackAct(){const k=P.snack&&P.snack.k;P.snack=null;clearTimeout(snT);if(k=='um')go('processing',{mode:'resume'});else if(k=='dm')APP.undoNewDoc();else if(k=='lm')go('pages');else draw();}
 const full=()=>P.mode=='main'&&APP.pages.length>=APP.MAX;
 // صوت الالتقاط: نقرتين قصيرتين ناعمتين، تقريب لصوت كاميرا أندرويد

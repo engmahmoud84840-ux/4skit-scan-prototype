@@ -23,7 +23,7 @@ const cp=a=>a.map(p=>p.slice());
 // القص يبدأ على الصورة كلها (D-789)
 const FIX=[[0,0],[1,0],[1,1],[0,1]];
 // mode: new (بعد الالتقاط أو صورة من الهاتف) / edit (وضع التعديل)
-function onShow(a){busy=false;if(a.mode=='resume'){P.bar=null;return draw();}snK=null;
+function onShow(a){busy=false;if(a.mode=='resume'){P.bar=null;render();return draw();}snK=null;
 if(a.mode=='new'){P={mode:'new',ph:a.photo,f:'auto',rot:0,br:0,c:cp(FIX),c0:FIX,init:{f:'auto',br:0,rot:0,c:FIX},bar:null,snack:null,N:APP.pages.length+1,lim:APP.pages.length+1>=APP.MAX};}
 else{const pg=APP.pages.find(p=>p.id==a.pageId),N=APP.pages.indexOf(pg)+1;
 if(a.mode=='retake')Object.assign(P,{mode:'edit',ph:a.photo,f:'auto',rot:0,br:0,c:cp(FIX),c0:FIX,init:{f:'auto',br:0,rot:0,c:FIX},replaced:true,bar:null,snack:null,N,pageId:pg.id,saved:null});
@@ -49,47 +49,46 @@ function reauto(){P.snap={f:P.f,rot:P.rot,br:P.br,c:cp(P.c)};const i=P.init;Obje
 function undo(){Object.assign(P,P.snap);P.snack=null;render();draw();}
 // الأزرار والخروج
 function page(){return {f:P.f,br:P.br,rot:P.rot,c:P.c,c0:P.c0};}
-function discard(){go('camera',{snack:'um'});}
+function discard(){P.ik=null;go('camera',{snack:'um'});}
 function sas(){if(busy)return;busy=true;APP.pages.push(APP.newPage(P.ph,page()));go('camera');}
 function next(){if(busy)return;busy=true;APP.pages.push(APP.newPage(P.ph,page()));go('pages',{end:1});}
 function qexp(){if(busy)return;busy=true;const p=APP.newPage(P.ph,page());APP.pages.push(p);APP.sel=new Set([p.id]);go('export',{from:'quick'});}
 function save(){if(busy)return;busy=true;const pg=APP.pages.find(p=>p.id==P.pageId);let a={};
 if(P.replaced){APP.replBak={id:pg.id,old:{src:pg.src,w:pg.w,h:pg.h,f:pg.f,br:pg.br,rot:pg.rot,c:pg.c,init:pg.init,img:pg.img}};Object.assign(pg,{src:P.ph.src,w:P.ph.w,h:P.ph.h,init:P.init});a.snack='replaced';}
 Object.assign(pg,{f:P.f,br:P.br,rot:P.rot,c:cp(P.c)});APP.makeImg(pg);go('pages',a);}
-function cancelEdit(){go('pages',changed()?{snack:'discarded'}:{});}
-function retake(){if(P.mode=='new')return discard();go('camera',{mode:'retake',pageId:P.pageId,from:'edit'});}
+function cancelEdit(){P.ik=null;go('pages',changed()?{snack:'discarded'}:{});}
+function retake(){if(P.mode=='new')return discard();P.ik=null;go('camera',{mode:'retake',pageId:P.pageId,from:'edit'});}
 function xTap(){if(P.bar)return;P.mode=='new'?discard():cancelEdit();}
 function onBack(){if(P.bar=='crop')return cropCancel();if(P.bar=='bright')return brCancel();P.mode=='new'?discard():cancelEdit();}
 function fitDoc(d){const a=document.getElementById('area').getBoundingClientRect(),aw=a.width-32,ah=a.height-32,r=d.naturalHeight&&d.naturalWidth?d.naturalHeight/d.naturalWidth:1.414;const w=Math.min(aw,ah/r);d.style.width=w+'px';d.style.height=w*r+'px';d.style.visibility='visible';}
 function draw(){if(!P.ph)return;const t=T[S.lang],fz=1,W=VW(),H=VH(),ar=S.lang=='ar',c=C();
 document.documentElement.style.setProperty('--pri',c.pri);
-const font=ar?"'IBM Plex Sans Arabic'":"Inter",bar=P.bar,lock=!!bar,edit=P.mode=='edit',dis=lock,nr=!P.img,wr=nr&&!dis?t.wr:'';
-const tool=(k,label,fn,off,why)=>`<div ${off?dA(label,why,1):`onclick="${fn}"`} class="${off?'':'pr'}" style="flex:1;min-width:0;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:12px;min-height:48px;color:${c.tx};${off?'opacity:.38;':''}">${ic(k)}<div style="font-size:12px;line-height:16px;text-align:center;font-weight:500">${label}</div></div>`;
-const tbtn=(label,fn,prim)=>`<div onclick="${fn}" class="pr" style="min-height:48px;display:flex;align-items:center;padding:0 12px;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;color:${prim?c.pri:c.tx}">${label}</div>`;
+const font=ar?"'IBM Plex Sans Arabic'":"Inter",bar=P.bar,edit=P.mode=='edit',nr=!P.img,wr=nr?t.wr:'';
+const tool=(k,label,fn,off,why,e)=>`<div ${off?dA(label,why,1):`onclick="${fn}"`} class="${off?'':'pr'}" style="${e?'flex:none;width:20%;':'flex:1;'}min-width:0;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:12px;min-height:48px;color:${e==2?c.pri:c.tx};${off?'opacity:.38;':''}">${ic(k)}<div style="font-size:12px;line-height:16px;text-align:center;font-weight:500">${label}</div></div>`;
 const btn=(label,fn,kind,off,icn,why)=>{const bg=off?'transparent':kind=='p'?c.pri:c.sec,col=off?c.tx:kind=='p'?c.on:c.pri;return `<div ${off?dA(label,why,1):`onclick="${fn}"`} class="${off?'':'pr'}" style="flex:1;min-height:48px;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px 16px;box-sizing:border-box;border-radius:12px;background:${bg};color:${col};font-size:14px;line-height:20px;gap:8px;font-weight:500;${off?`border:1px solid ${c.tx};opacity:.38;`:''}">${icn&&icn!='ic_arrow_forward'?ic(icn):''}<span>${label}</span>${icn=='ic_arrow_forward'?`<span style="display:flex;${ar?'transform:scaleX(-1)':''}">${ic(icn)}</span>`:''}</div>`;};
-const fl=['auto','color','gray','bw','orig'].map(k=>{const on=P.f==k,lab=k=='auto'&&on?`${t.f.auto} · ${t.f.color}`:t.f[k];return `<div ${dis||nr?dA(lab,wr,1):`onclick="setF('${k}')"`} class="${dis||nr?'':'pr'}" style="flex:none;display:flex;align-items:center;gap:6px;min-height:32px;padding:4px ${on?10:12}px;box-sizing:border-box;border-radius:8px;white-space:nowrap;font-size:14px;line-height:20px;font-weight:500;${on?`border:2px solid ${c.pri};background:${c.sec};color:${c.pri};`:`border:1px ${dis||nr?'dashed':'solid'} ${c.bd};color:${c.tx};`}${dis||nr?'opacity:.38;':''}">${on?`<span style="width:18px;height:18px;display:flex">${ic('ic_check',18)}</span>`:''}${lab}</div>`;}).join('');
+const fl=['auto','color','gray','bw','orig'].map(k=>{const on=P.f==k,lab=k=='auto'&&on?`${t.f.auto} · ${t.f.color}`:t.f[k];return `<div ${nr?dA(lab,wr,1):`onclick="setF('${k}')"`} class="${nr?'':'pr'}" style="flex:none;display:flex;align-items:center;gap:6px;min-height:32px;padding:4px ${on?10:12}px;box-sizing:border-box;border-radius:8px;white-space:nowrap;font-size:14px;line-height:20px;font-weight:500;${on?`border:2px solid ${c.pri};background:${c.sec};color:${c.pri};`:`border:1px ${nr?'dashed':'solid'} ${c.bd};color:${c.tx};`}${nr?'opacity:.38;':''}">${on?`<span style="width:18px;height:18px;display:flex">${ic('ic_check',18)}</span>`:''}${lab}</div>`;}).join('');
 let mid;
-if(bar=='crop')mid=`<div style="padding:4px 8px 0"><div style="display:flex;justify-content:center;gap:8px">${tool('ic_crop_free',t.full,'P.c=cp(APP.FULL);draw()')}${tool('ic_document_scanner',t.det,'P.c=cp(P.c0);draw()')}</div><div style="display:flex;justify-content:space-between;padding:4px 0">${tbtn(t.cancel,'cropCancel()')}${tbtn(t.done,'cropDone()',1)}</div></div>`;
-else if(bar=='bright')mid=`<div style="padding:8px 8px 0"><div style="display:flex;align-items:center;gap:4px;color:${c.tx}"><div class="ib pr" onclick="setBr(P.br-1)">${ic('ic_remove')}</div><input id="brr" class="br" type="range" min="-100" max="100" step="1" value="${P.br}" oninput="setBr(+this.value)" style="direction:ltr"><div class="ib pr" onclick="setBr(P.br+1)">${ic('ic_add')}</div><div id="brv" style="min-width:36px;text-align:center;font:500 14px/20px Inter,system-ui">${P.br}</div></div><div style="display:flex;justify-content:space-between;padding:4px 0">${tbtn(t.cancel,'brCancel()')}${tbtn(t.done,'brDone()',1)}</div></div>`;
+if(bar=='crop')mid=`<div style="padding:4px 8px 0"><div style="display:flex;justify-content:center;gap:8px">${tool('ic_crop_free',t.full,'P.c=cp(APP.FULL);draw()')}${tool('ic_document_scanner',t.det,'P.c=cp(P.c0);draw()')}</div><div style="display:flex;justify-content:space-between;padding:4px 0">${tool('ic_close',t.cancel,'cropCancel()',0,'',1)}${tool('ic_check',t.done,'cropDone()',0,'',2)}</div></div>`;
+else if(bar=='bright')mid=`<div style="padding:8px 8px 0"><div style="display:flex;align-items:center;gap:4px;color:${c.tx}"><div class="ib pr" onclick="setBr(P.br-1)">${ic('ic_remove')}</div><input id="brr" class="br" type="range" min="-100" max="100" step="1" value="${P.br}" oninput="setBr(+this.value)" style="direction:ltr"><div class="ib pr" onclick="setBr(P.br+1)">${ic('ic_add')}</div><div id="brv" style="min-width:36px;text-align:center;font:500 14px/20px Inter,system-ui">${P.br}</div></div><div style="display:flex;justify-content:space-between;padding:4px 0">${tool('ic_close',t.cancel,'brCancel()',0,'',1)}${tool('ic_check',t.done,'brDone()',0,'',2)}</div></div>`;
 else mid=`<div style="display:flex;padding:4px 8px">${tool('ic_retake',t.rt,'retake()')}${tool('ic_crop',t.crop,'openCrop()',nr,wr)}${tool('ic_rotate',t.rot,'rot()',nr,wr)}${tool('ic_brightness',t.br,'openBr()',nr,wr)}${tool('ic_reauto',t.ra,'reauto()',nr||!edited(),nr?wr:t.raN)}</div>`;
-const acts=edit?[btn(t.cancel,'cancelEdit()','s',lock),btn(t.save,'save()','p',dis||nr,'',wr)]:[btn(t.sas,'sas()','s',dis||P.lim||nr,'ic_scan_new',wr||(P.lim&&!dis?t.lm:'')),btn(t.next,'next()','p',dis||nr,'ic_arrow_forward',wr)];
+const acts=edit?[btn(t.cancel,'cancelEdit()','s'),btn(t.save,'save()','p',nr,'',wr)]:[btn(t.sas,'sas()','s',P.lim||nr,'ic_scan_new',wr||(P.lim?t.lm:'')),btn(t.next,'next()','p',nr,'ic_arrow_forward',wr)];
 const mk=k=>P.snack=='undo'?snack(t.ra2,t.undo,c,'undo()',k):'',sn=mk(0);
-const xoff=lock;
+const scr=bar?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:4"></div>`:'';
 document.getElementById('ph').innerHTML=`<div dir="${ar?'rtl':'ltr'}" style="width:${W}px;height:${H}px;overflow:hidden;position:relative;font-family:${font},system-ui;background:${c.bg};display:flex;flex-direction:column">
 ${(()=>{const mc=document.createElement('canvas').getContext('2d'),mw=(x,w,px)=>{mc.font=`${w} ${px}px ${font}`;return mc.measureText(x).width};
-const xB=`<div onclick="xTap()" ${xoff?dA(t.aX):`aria-label="${t.aX}"`} style="${xoff?'opacity:.38':''}" class="ib ${xoff?'':'pr'}">${ic('ic_close')}</div>`;
+const xB=`<div onclick="xTap()" aria-label="${t.aX}" class="ib pr">${ic('ic_close')}</div>`;
 const tB=`<div style="font-weight:600;font-size:20px;line-height:28px;white-space:nowrap">${t.page} ${P.N}</div>`;
-const eB=edit?'':`<div ${dis||nr?dA(t.exp,wr,1):'onclick="qexp()"'} class="${dis||nr?'':'pr'}" style="display:flex;align-items:center;gap:6px;min-height:40px;padding:0 12px 0 10px;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;flex:none;${dis||nr?`border:1px solid ${c.tx};opacity:.38;color:${c.tx}`:`background:${c.sec};color:${c.pri}`}">${ic('ic_export')}${t.exp}</div>`;
+const eB=edit?'':`<div ${nr?dA(t.exp,wr,1):'onclick="qexp()"'} class="${nr?'':'pr'}" style="display:flex;align-items:center;gap:6px;min-height:40px;padding:0 12px 0 10px;border-radius:12px;font-size:14px;line-height:20px;font-weight:500;white-space:nowrap;flex:none;${nr?`border:1px solid ${c.tx};opacity:.38;color:${c.tx}`:`background:${c.sec};color:${c.pri}`}">${ic('ic_export')}${t.exp}</div>`;
 const side=Math.max(48,edit?0:mw(t.exp,500,14)+20+6+22),fit=mw(`${t.page} ${P.N}`,600,20)+2*side+8<=W;
-return fit?`<div style="min-height:64px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 4px;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none;color:${c.tx}"><div style="justify-self:start">${xB}</div>${tB}<div style="justify-self:end">${eB}</div></div>`
-:`<div style="background:${c.bar};border-bottom:1px solid ${c.bd};flex:none;padding:0 4px 8px;color:${c.tx}"><div style="display:flex;justify-content:space-between;align-items:center;min-height:64px">${xB}${eB}</div><div style="padding:0 12px;display:flex;justify-content:center">${tB}</div></div>`;})()}
+return fit?`<div style="position:relative;min-height:64px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 4px;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none;color:${c.tx}"><div style="justify-self:start">${xB}</div>${tB}<div style="justify-self:end">${eB}</div>${scr}</div>`
+:`<div style="position:relative;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none;padding:0 4px 8px;color:${c.tx}"><div style="display:flex;justify-content:space-between;align-items:center;min-height:64px">${xB}${eB}</div><div style="padding:0 12px;display:flex;justify-content:center">${tB}</div>${scr}</div>`;})()}
 <div id="area" style="flex:1;position:relative;overflow:hidden;min-height:0">${sn?`<div id="snw" style="position:absolute;bottom:12px;inset-inline:16px;z-index:5">${sn}</div>`:''}</div>
 <div style="background:${c.bar};border-top:1px solid ${c.bd};flex:none">
-<div class="chips">${fl}</div>
+<div style="position:relative"><div class="chips">${fl}</div>${scr}</div>
 ${mid}
-<div style="display:flex;gap:8px;padding:8px 16px 16px;border-top:1px solid ${c.bd}">${acts.join('')}</div>
+<div style="position:relative;display:flex;gap:8px;padding:8px 16px 16px;border-top:1px solid ${c.bd}">${acts.join('')}${scr}</div>
 </div></div>`;
-fill();const m=document.getElementById('snm');if(m&&m.nextElementSibling&&m.offsetHeight>2*20+28+1)document.getElementById('snw').innerHTML=mk(1);if(P.snack!==snK){clearTimeout(snT);snK=P.snack;if(P.snack)snT=setTimeout(()=>{P.snack=null;snK=null;draw();},P.snack=='limit'?4000:10000);}}
+fill();const m=document.getElementById('snm');if(m&&m.nextElementSibling&&m.offsetHeight>2*20+28+1)document.getElementById('snw').innerHTML=mk(1);if(P.snack!==snK){clearTimeout(snT);snK=P.snack;if(P.snack)snT=setTimeout(()=>{P.snack=null;snK=null;draw();},P.snack=='limit'?4000:6000);}}
 function photo(){return `<img src="${P.ph.src}" style="position:absolute;inset:0;width:100%;height:100%;display:block" draggable="false">`;}
 function fill(){const A=document.getElementById('area'),a=A.getBoundingClientRect(),aw=a.width-32,ah=a.height-32;const keep=A.innerHTML;let h='';
 if(P.bar=='crop'){const r=P.ph.w/P.ph.h,pw=Math.min(aw,ah*r),ph=pw/r,x0=(a.width-pw)/2,y0=(a.height-ph)/2,pr=C().pri;

@@ -23,8 +23,8 @@ rep:'Page replaced',dis:'Changes discarded',bi:"Couldn't open this image. It may
 const MAX=APP.MAX;let P={del:[],perm:false,zoom:null,zsel:null,dlg:false,snack:null,drag:null,pdf:null,sid:0},snT=null,snK=null;
 const PG=()=>APP.pages,SEL=()=>APP.sel;
 function onShow(a){if(P.sid!=APP.sid){P.del=[];P.perm=false;P.sid=APP.sid;}P.zoom=null;P.zsel=null;P.dlg=false;P.snack=null;
-if(a.snack=='replaced')P.snack={m:T[S.lang].rep,a:T[S.lang].undo,fn:'undoRep()',d:10000};
-if(a.snack=='discarded')P.snack={m:T[S.lang].dis,a:T[S.lang].undo,fn:"go('processing',{mode:'resume'})",d:10000};
+if(a.snack=='replaced')P.snack={m:T[S.lang].rep,a:T[S.lang].undo,fn:'undoRep()',d:6000};
+if(a.snack=='discarded')P.snack={m:T[S.lang].dis,a:T[S.lang].undo,fn:"go('processing',{mode:'resume'})",d:6000};
 draw();if(a.end)setTimeout(()=>{const g=document.getElementById('grid');if(g)g.scrollTop=g.scrollHeight;},0);}
 function onBack(){if(P.pdf){P.pdf=null;return draw();}if(P.dlg){P.dlg=false;return draw();}if(P.zoom!=null)return zclose();go('camera');}
 function undoRep(){const b=APP.replBak;P.snack=null;if(b){const pg=PG().find(p=>p.id==b.id);if(pg){Object.assign(pg,b.old);APP.makeImg(pg);}APP.replBak=null;}draw();}
@@ -46,7 +46,7 @@ function doDel(){const t=target();if(!t.length)return;t.slice().sort((a,b)=>PG()
 if(P.zoom!=null){if(!tot()){P.zoom=null;P.zsel=null;SEL().clear();}else{t.forEach(p=>P.zsel&&P.zsel.delete(p.id));if(P.zoom>=tot())P.zoom=tot()-1;}}else SEL().clear();draw();}
 function doUndo(){if(P.zoom!=null)return zclose();if(P.perm){P.perm=false;P.del=P.permBak;P.permBak=null;clearTimeout(P.pt);return draw();}
 if(full())return info(T[S.lang].undoLim(MAX));const d=P.del.pop();if(!d)return;const i=Math.min(d.idx,tot());PG().splice(i,0,d.p);draw();setTimeout(()=>{const e=document.querySelector(`[data-id="${d.p.id}"]`);if(e)e.scrollIntoView({block:'nearest',behavior:'smooth'});flashEl(d.p.id);},0);}
-function doPerm(){if(P.zoom!=null)return zclose();P.permBak=P.del;P.del=[];P.perm=true;P.ps=Date.now();clearTimeout(P.pt);P.pt=setTimeout(()=>{P.perm=false;P.permBak=null;draw();},10000);draw();}
+function doPerm(){if(P.zoom!=null)return zclose();P.permBak=P.del;P.del=[];P.perm=true;P.ps=Date.now();clearTimeout(P.pt);P.pt=setTimeout(()=>{P.perm=false;P.permBak=null;draw();},6000);draw();}
 function addCam(){if(P.zoom!=null)return zclose();if(full())return info(T[S.lang].lim(MAX));go('camera');}
 function addPhoto(){if(P.zoom!=null)return zclose();if(full())return info(T[S.lang].lim(MAX));pick('image/*',f=>APP.fileToPhoto(f).then(ph=>go('processing',{mode:'new',photo:ph}),()=>info(T[S.lang].bi)));}
 function addPdf(){if(P.zoom!=null)return zclose();if(full())return info(T[S.lang].lim(MAX));const t=T[S.lang];pick('application/pdf,.pdf',async f=>{P.pdf={x:0,t:0};draw();
@@ -89,7 +89,7 @@ const xBtn=`<div onclick="${zm?'zclose()':"go('camera')"}" class="ib pr" style="
 const ttl=`<div style="font-weight:600;font-size:20px;line-height:28px;white-space:nowrap;color:${c.tx}">${title}</div>`;
 const top=`<div style="min-height:64px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 4px;background:${c.bar};border-bottom:1px solid ${c.bd};flex:none"><div style="justify-self:start">${xBtn}</div>${ttl}<div style="justify-self:end">${soBtn}</div></div>`;
 const delN=P.del.length;
-const dwrap=(txt,btns,tm)=>`<div style="position:relative;overflow:hidden;margin:8px 16px 0;background:${c.ph};border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;gap:0 4px;padding:0 4px 0 12px;flex:none;color:${c.tx}"><div style="flex:1 1 auto;display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;padding:14px 0"><span>${txt}</span></div><div style="display:flex;flex-wrap:wrap;flex:0 1 auto;max-width:100%;margin-inline-start:auto">${btns}</div>${tm?`<div style="position:absolute;bottom:0;inset-inline:0;height:3px;background:${c.pri};transform-origin:${ar?'right':'left'};animation:dr 10s linear forwards;animation-delay:-${(Date.now()-P.ps)/1000}s"></div>`:''}</div>`;
+const dwrap=(txt,btns,tm)=>`<div style="position:relative;overflow:hidden;margin:8px 16px 0;background:${c.ph};border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;gap:0 4px;padding:0 4px 0 12px;flex:none;color:${c.tx}"><div style="flex:1 1 auto;display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;padding:14px 0"><span>${txt}</span></div><div style="display:flex;flex-wrap:wrap;flex:0 1 auto;max-width:100%;margin-inline-start:auto">${btns}</div>${tm?`<div style="position:absolute;bottom:0;inset-inline:0;height:3px;background:${c.pri};transform-origin:${ar?'right':'left'};animation:dr 6s linear forwards;animation-delay:-${(Date.now()-P.ps)/1000}s"></div>`:''}</div>`;
 const dbar=P.perm?dwrap(t.permDone,tb(t.undo,'doUndo()'),1):delN?dwrap(t.delBar(delN),tb(t.undo,'doUndo()')+tb(t.perm,'doPerm()')):'';
 const sa=`<div ${empty?dA(t.all,t.np,1):'onclick="selAll()"'} class="${empty?'':'pr'}" style="display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;flex:none;color:${c.tx};font-size:14px;line-height:20px;font-weight:500;${empty?'opacity:.38;':''}">${cb(selState(),c,false)}<span>${t.all}</span></div>`;
 const thumbPage=p=>`<div style="position:absolute;inset:0;background:${c.ph};overflow:hidden"><img src="${p.img}" style="display:block;width:100%" draggable="false"></div>`;

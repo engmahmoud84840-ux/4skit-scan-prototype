@@ -61,7 +61,7 @@ const cv=document.createElement('canvas');cv.width=v.width;cv.height=v.height;co
 const ph={src:cv.toDataURL('image/jpeg',.88),w:cv.width,h:cv.height};out.push(APP.newPage(ph,{f:'orig',br:0,rot:0,c:APP.FULL,c0:APP.FULL}));}
 if(stop())return {n:0};prog(doc.numPages,doc.numPages);APP.pages.push(...out);return {n:out.length};};
 // "مستند جديد": الجلسة تتحذف بعد مهلة التراجع (D-087، D-092)
-APP.newDoc=()=>{clearTimeout(APP.nd);APP.bak={pages:APP.pages,sel:APP.sel,sid:APP.sid};APP.pages=[];APP.sel=new Set();APP.sid++;APP.nd=setTimeout(()=>{APP.bak=null;},10000);};
+APP.newDoc=()=>{clearTimeout(APP.nd);APP.bak={pages:APP.pages,sel:APP.sel,sid:APP.sid};APP.pages=[];APP.sel=new Set();APP.sid++;APP.nd=setTimeout(()=>{APP.bak=null;},6000);};
 APP.undoNewDoc=()=>{clearTimeout(APP.nd);if(!APP.bak)return;Object.assign(APP,{pages:APP.bak.pages,sel:APP.bak.sel,sid:APP.bak.sid});APP.bak=null;go('success');};
 APP.endSession=()=>{APP.pages=[];APP.sel=new Set();APP.sid++;};
 const NAMES=['camera','processing','pages','export','success','settings'],F={};

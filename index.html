@@ -20,7 +20,7 @@ const APP={lang:phoneLang,phoneLang,pages:[],sel:new Set(),flash:'ic_flash_auto'
 FIX:[[0,0],[1,0],[1,1],[0,1]],FULL:[[0,0],[1,0],[1,1],[0,1]]};
 window.APP=APP;
 // الفلاتر تقريبية بتأثيرات المتصفح (D-783)
-APP.FLT=(f,br)=>{const b={auto:'brightness(1.1) contrast(1.3) saturate(1.15)',color:'brightness(1.1) contrast(1.3) saturate(1.15)',gray:'grayscale(1) brightness(1.1) contrast(1.3)',bw:'grayscale(1) brightness(1.3) contrast(3.2)',orig:''}[f];return (b+` brightness(${1+br/100})`).trim();};
+APP.FLT=(f,br)=>{const b={auto:'brightness(1.1) contrast(1.3) saturate(1.15)',color:'brightness(1.1) contrast(1.3) saturate(1.15)',gray:'grayscale(1) brightness(1.1) contrast(1.3)',bright:'brightness(1.12) contrast(1.3) saturate(1.5)',bwb:'grayscale(1) brightness(1.3) contrast(3.2)',bwl:'grayscale(1) brightness(1.45) contrast(3.2)',orig:''}[f];return (b+` brightness(${1+br/100})`).trim();};
 const IMG={};
 APP.loadImg=src=>IMG[src]||(IMG[src]=new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src;}));
 // القص: الأركان الأربعة تتفرد لمستطيل (شبكة مثلثات)، ثم التدوير والفلتر
